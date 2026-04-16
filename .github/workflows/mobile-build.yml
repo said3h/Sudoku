@@ -60,14 +60,31 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Build unsigned iOS app
-        run: flutter build ios --release --no-codesign
+      - name: Prepare iOS build files
+        run: flutter build ios --release --config-only --no-codesign
+
+      - name: Install CocoaPods dependencies
+        run: pod install --project-directory=ios
+
+      - name: Build unsigned iOS app with Xcode
+        run: |
+          xcodebuild \
+            -workspace ios/Runner.xcworkspace \
+            -scheme Runner \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build/ios \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            DEVELOPMENT_TEAM="" \
+            build
 
       - name: Package unsigned IPA
         run: |
           rm -rf build/ios/Payload
           mkdir -p build/ios/Payload
-          cp -R build/ios/iphoneos/Runner.app build/ios/Payload/Runner.app
+          cp -R build/ios/Build/Products/Release-iphoneos/Runner.app build/ios/Payload/Runner.app
           cd build/ios
           ditto -c -k --sequesterRsrc --keepParent Payload sudoku-premium-unsigned.ipa
 
