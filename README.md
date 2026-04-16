@@ -22,7 +22,7 @@ flutter run
 
 - Android APK local: `flutter build apk --release`
 - Web local: `flutter build web`
-- iOS IPA: se genera en GitHub Actions con macOS usando `--no-codesign`
+- iOS IPA: se genera en GitHub Actions como `ipa` unsigned para Sideloadly
 
 ## Artefactos CI
 
@@ -31,4 +31,4 @@ El workflow de GitHub Actions `mobile-build.yml` publica estos artefactos:
 - `sudoku-premium-apk`
 - `sudoku-premium-ipa`
 
-El `ipa` esta pensado para descarga manual y posterior instalacion con Sideloadly.
+El `ipa` se empaqueta sin firma y esta pensado para descarga manual y posterior instalacion con Sideloadly.
