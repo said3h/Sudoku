@@ -57,7 +57,7 @@ class AppTheme {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(24),
-          side: const BorderSide(color: AppColors.surfaceBorder),
+          side: BorderSide(color: AppColors.surfaceBorder),
         ),
       ),
       dividerTheme: const DividerThemeData(
