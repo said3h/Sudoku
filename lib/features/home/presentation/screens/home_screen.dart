@@ -58,7 +58,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
     final isDailyCompleted = stats.lastCompletedDayKey == todayKey;
     final hasSavedGame = savedGame != null && !savedGame.isComplete;
-    final isStreakAtRisk = _isStreakAtRisk(stats.lastCompletedDayKey);
     final shouldShowResume = hasSavedGame && !savedGame.isZenMode;
 
     return Scaffold(
@@ -91,7 +90,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const SizedBox(height: 18),
-                  _AppHeader(streak: stats.currentStreak),
+                  _AppHeader(
+                    streak: stats.currentStreak,
+                    level: _calculateLevel(stats.gamesCompleted),
+                  ),
                   const SizedBox(height: 24),
                   _DailyChallengeHero(
                     isCompleted: isDailyCompleted,
@@ -120,9 +122,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   _MotivationalMessage(
                     currentStreak: stats.currentStreak,
                     isDailyCompleted: isDailyCompleted,
-                    isStreakAtRisk: isStreakAtRisk,
                     hasSavedGame: hasSavedGame,
                   ),
+                  const SizedBox(height: 18),
+                  _WeeklyProgress(stats: stats),
                   const SizedBox(height: 18),
                   _QuickStatsRow(stats: stats),
                   const SizedBox(height: 26),
@@ -142,13 +145,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  bool _isStreakAtRisk(String? lastCompletedDayKey) {
-    if (lastCompletedDayKey == null) return false;
-    final yesterday = DateTime.now().subtract(const Duration(days: 1));
-    final yesterdayKey = yesterday.toIso8601String().split('T').first;
-    final todayKey = DateTime.now().toIso8601String().split('T').first;
-    return lastCompletedDayKey != todayKey &&
-        lastCompletedDayKey != yesterdayKey;
+  int _calculateLevel(int gamesCompleted) {
+    if (gamesCompleted < 5) return 1;
+    if (gamesCompleted < 15) return 2;
+    if (gamesCompleted < 30) return 3;
+    if (gamesCompleted < 50) return 4;
+    if (gamesCompleted < 100) return 5;
+    return 6;
   }
 
   Future<void> _startNewGame(BuildContext context, bool zenModeEnabled) async {
@@ -166,9 +169,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 }
 
 class _AppHeader extends StatelessWidget {
-  const _AppHeader({required this.streak});
+  const _AppHeader({required this.streak, required this.level});
 
   final int streak;
+  final int level;
 
   @override
   Widget build(BuildContext context) {
@@ -209,8 +213,46 @@ class _AppHeader extends StatelessWidget {
             ],
           ),
         ),
+        _LevelBadge(level: level),
+        const SizedBox(width: 8),
         if (streak > 0) _StreakBadge(streak: streak),
       ],
+    );
+  }
+}
+
+class _LevelBadge extends StatelessWidget {
+  const _LevelBadge({required this.level});
+
+  final int level;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceLight,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.surfaceBorder),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.star_rounded,
+            color: AppColors.accentLight,
+            size: 14,
+          ),
+          const SizedBox(width: 4),
+          Text(
+            '$level',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.textSecondary,
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -223,7 +265,7 @@ class _StreakBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -231,7 +273,7 @@ class _StreakBadge extends StatelessWidget {
             AppColors.accent.withOpacity(0.1),
           ],
         ),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: AppColors.accent.withOpacity(0.3),
         ),
@@ -239,15 +281,11 @@ class _StreakBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Text('🔥', style: TextStyle(fontSize: 16))
-              .animate(onPlay: (c) => c.repeat())
-              .shimmer(
-                  duration: 2000.ms,
-                  color: AppColors.accentLight.withOpacity(0.3)),
-          const SizedBox(width: 6),
+          const Text('🔥', style: TextStyle(fontSize: 14)),
+          const SizedBox(width: 4),
           Text(
             '$streak',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: AppColors.accent,
                   fontWeight: FontWeight.w800,
                 ),
@@ -280,8 +318,8 @@ class _DailyChallengeHero extends StatelessWidget {
           gradient: isCompleted
               ? LinearGradient(
                   colors: [
-                    AppColors.success.withOpacity(0.15),
-                    AppColors.success.withOpacity(0.08),
+                    AppColors.success.withOpacity(0.12),
+                    AppColors.success.withOpacity(0.06),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
@@ -289,16 +327,16 @@ class _DailyChallengeHero extends StatelessWidget {
               : AppColors.heroGradient,
           border: Border.all(
             color: isCompleted
-                ? AppColors.success.withOpacity(0.3)
+                ? AppColors.success.withOpacity(0.25)
                 : AppColors.surfaceBorder,
           ),
           boxShadow: [
             BoxShadow(
               color: isCompleted
-                  ? AppColors.success.withOpacity(0.15)
-                  : AppColors.accentBlue.withOpacity(0.18),
-              blurRadius: 38,
-              spreadRadius: -10,
+                  ? AppColors.success.withOpacity(0.1)
+                  : AppColors.accentBlue.withOpacity(0.15),
+              blurRadius: 32,
+              spreadRadius: -8,
             ),
           ],
         ),
@@ -329,7 +367,7 @@ class _DailyChallengeHero extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        isCompleted ? 'Reto de hoy completado' : 'Reto de hoy',
+                        isCompleted ? 'Reto de hoy' : 'Reto de hoy',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                               color: isCompleted
                                   ? AppColors.success
@@ -340,7 +378,7 @@ class _DailyChallengeHero extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         isCompleted
-                            ? 'Mañana tendras un nuevo desafio'
+                            ? 'Completado · Mañana mas'
                             : '1 puzzle · 1 oportunidad',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: isCompleted
@@ -352,44 +390,17 @@ class _DailyChallengeHero extends StatelessWidget {
                   ),
                 ),
                 Icon(
-                  Icons.arrow_forward_rounded,
+                  isCompleted
+                      ? Icons.check_rounded
+                      : Icons.arrow_forward_rounded,
                   color: isCompleted ? AppColors.success : AppColors.accent,
-                  size: 28,
+                  size: 26,
                 ),
               ],
             ),
             if (!isCompleted) ...[
-              const SizedBox(height: 20),
-              _CountdownTimer(timeUntilMidnight: timeUntilMidnight),
-            ],
-            if (isCompleted) ...[
               const SizedBox(height: 16),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                decoration: BoxDecoration(
-                  color: AppColors.success.withOpacity(0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(
-                      Icons.auto_awesome_rounded,
-                      color: AppColors.success,
-                      size: 16,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Racha mantenida',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.success,
-                            fontWeight: FontWeight.w600,
-                          ),
-                    ),
-                  ],
-                ),
-              ),
+              _CountdownTimer(timeUntilMidnight: timeUntilMidnight),
             ],
           ],
         ),
@@ -412,67 +423,115 @@ class _CountdownTimer extends StatelessWidget {
     return Row(
       children: [
         Text(
-          'Siguiente reto en',
+          'Siguiente',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColors.textSecondary,
+                color: AppColors.textMuted,
               ),
         ),
-        const SizedBox(width: 12),
-        _CountdownDigit(value: hours, label: 'h'),
-        _CountdownDigit(value: minutes, label: 'm', showColon: true),
-        _CountdownDigit(value: seconds, label: 's', showColon: true),
+        const SizedBox(width: 10),
+        _Digit(value: hours),
+        const Text(':', style: TextStyle(color: AppColors.textMuted)),
+        _Digit(value: minutes),
+        const Text(':', style: TextStyle(color: AppColors.textMuted)),
+        _Digit(value: seconds),
       ],
     );
   }
 }
 
-class _CountdownDigit extends StatelessWidget {
-  const _CountdownDigit({
-    required this.value,
-    required this.label,
-    this.showColon = false,
-  });
+class _Digit extends StatelessWidget {
+  const _Digit({required this.value});
 
   final int value;
-  final String label;
-  final bool showColon;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-          decoration: BoxDecoration(
-            color: AppColors.surfaceLight,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Text(
-            value.toString().padLeft(2, '0'),
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-              fontFeatures: const [FontFeature.tabularFigures()],
-            ),
-          ),
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceLight,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        value.toString().padLeft(2, '0'),
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          fontWeight: FontWeight.w700,
+          fontFeatures: const [FontFeature.tabularFigures()],
         ),
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColors.textMuted,
-              ),
-        ),
-        if (showColon)
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: Text(
-              ':',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: AppColors.textMuted,
-                  ),
-            ),
-          ),
-      ],
+      ),
     );
+  }
+}
+
+class _WeeklyProgress extends StatelessWidget {
+  const _WeeklyProgress({required this.stats});
+
+  final SudokuStats stats;
+
+  @override
+  Widget build(BuildContext context) {
+    final weekDays = _getWeekDays();
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.surfaceBorder),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: weekDays.map((day) {
+          final isCompleted = day['key'] == stats.lastCompletedDayKey;
+          final isToday = day['isToday'] == true;
+
+          return Column(
+            children: [
+              Text(
+                day['label'] as String,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: isToday ? AppColors.accent : AppColors.textMuted,
+                      fontWeight: isToday ? FontWeight.w700 : FontWeight.w500,
+                      fontSize: 10,
+                    ),
+              ),
+              const SizedBox(height: 6),
+              Container(
+                width: 10,
+                height: 10,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isCompleted
+                      ? AppColors.success
+                      : isToday
+                          ? AppColors.accent.withOpacity(0.3)
+                          : AppColors.surfaceLight,
+                  border: isToday
+                      ? Border.all(color: AppColors.accent, width: 1.5)
+                      : null,
+                ),
+              ),
+            ],
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  List<Map<String, dynamic>> _getWeekDays() {
+    final now = DateTime.now();
+    final labels = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+
+    return List.generate(7, (index) {
+      final date = now.subtract(Duration(days: 6 - index));
+      final key = date.toIso8601String().split('T').first;
+      return {
+        'label': labels[date.weekday - 1],
+        'key': key,
+        'isToday': index == 6,
+      };
+    });
   }
 }
 
@@ -492,37 +551,37 @@ class _ContinueCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(18),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(18),
           border: Border.all(color: AppColors.surfaceBorder),
         ),
         child: Row(
           children: [
             Container(
-              width: 48,
-              height: 48,
+              width: 44,
+              height: 44,
               decoration: BoxDecoration(
                 color: AppColors.accentBlue.withOpacity(0.12),
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(12),
               ),
               child: const Icon(
                 Icons.play_circle_outline_rounded,
                 color: AppColors.accentBlue,
-                size: 26,
+                size: 24,
               ),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     'Continuar partida',
-                    style: Theme.of(context).textTheme.titleMedium,
+                    style: Theme.of(context).textTheme.titleSmall,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 2),
                   Text(
                     'Retoma donde lo dejaste',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -533,7 +592,7 @@ class _ContinueCard extends StatelessWidget {
               ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
                 color: _getModeColor().withOpacity(0.12),
                 borderRadius: BorderRadius.circular(8),
@@ -545,12 +604,6 @@ class _ContinueCard extends StatelessWidget {
                       fontWeight: FontWeight.w600,
                     ),
               ),
-            ),
-            const SizedBox(width: 10),
-            const Icon(
-              Icons.arrow_forward_ios_rounded,
-              color: AppColors.textMuted,
-              size: 14,
             ),
           ],
         ),
@@ -575,37 +628,35 @@ class _MotivationalMessage extends StatelessWidget {
   const _MotivationalMessage({
     required this.currentStreak,
     required this.isDailyCompleted,
-    required this.isStreakAtRisk,
     required this.hasSavedGame,
   });
 
   final int currentStreak;
   final bool isDailyCompleted;
-  final bool isStreakAtRisk;
   final bool hasSavedGame;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.surfaceBorder),
       ),
       child: Row(
         children: [
           Icon(
-            _getMessageIcon(),
-            color: _getMessageColor(),
-            size: 20,
+            _getIcon(),
+            color: _getColor(),
+            size: 18,
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
               _getMessage(),
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: _getMessageColor(),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: _getColor(),
                   ),
             ),
           ),
@@ -614,36 +665,28 @@ class _MotivationalMessage extends StatelessWidget {
     );
   }
 
-  IconData _getMessageIcon() {
-    if (isDailyCompleted) return Icons.celebration_rounded;
-    if (isStreakAtRisk) return Icons.schedule_rounded;
+  IconData _getIcon() {
+    if (isDailyCompleted) return Icons.celebration_outlined;
     if (hasSavedGame) return Icons.play_arrow_rounded;
+    if (currentStreak > 0) return Icons.local_fire_department_outlined;
     return Icons.trending_up_rounded;
   }
 
-  Color _getMessageColor() {
+  Color _getColor() {
     if (isDailyCompleted) return AppColors.success;
-    if (isStreakAtRisk) return AppColors.warning;
+    if (hasSavedGame) return AppColors.accentBlue;
+    if (currentStreak > 0) return AppColors.accent;
     return AppColors.textSecondary;
   }
 
   String _getMessage() {
     if (isDailyCompleted && currentStreak > 1) {
-      return 'Racha de $currentStreak dias. Sigue asi!';
+      return 'Racha de $currentStreak dias';
     }
-    if (isDailyCompleted) {
-      return 'Reto completado! Mañana mas.';
-    }
-    if (isStreakAtRisk) {
-      return 'Tu racha esta en riesgo. Completa el reto hoy!';
-    }
-    if (hasSavedGame) {
-      return 'Tienes una partida en progreso.';
-    }
-    if (currentStreak > 0) {
-      return 'Continua tu racha de $currentStreak dias.';
-    }
-    return 'Completa el reto diario para empezar tu racha.';
+    if (isDailyCompleted) return 'Reto completado';
+    if (hasSavedGame) return 'Continua tu partida';
+    if (currentStreak > 0) return 'Mantén tu racha de $currentStreak dias';
+    return 'Completa el reto diario para empezar tu racha';
   }
 }
 
@@ -665,7 +708,7 @@ class _QuickStatsRow extends StatelessWidget {
             label: 'Completadas',
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 8),
         Expanded(
           child: _QuickStatCard(
             icon: Icons.timer_outlined,
@@ -673,7 +716,7 @@ class _QuickStatsRow extends StatelessWidget {
             label: 'Mejor tiempo',
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 8),
         Expanded(
           child: _QuickStatCard(
             icon: Icons.local_fire_department_outlined,
@@ -713,13 +756,13 @@ class _QuickStatCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 14),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(14),
         border: Border.all(color: AppColors.surfaceBorder),
       ),
       child: Column(
         children: [
-          Icon(icon, color: AppColors.textMuted, size: 18),
-          const SizedBox(height: 8),
+          Icon(icon, color: AppColors.textMuted, size: 16),
+          const SizedBox(height: 6),
           Text(
             value,
             style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -731,7 +774,7 @@ class _QuickStatCard extends StatelessWidget {
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: AppColors.textMuted,
-                  fontSize: 10,
+                  fontSize: 9,
                 ),
           ),
         ],
@@ -764,36 +807,24 @@ class _NewGameSection extends StatelessWidget {
         const SizedBox(height: 10),
         Row(
           children: [
-            Expanded(
-              child: _DifficultyChip(
-                difficulty: Difficulty.easy,
-                zenEnabled: zenEnabled,
-                onTap: () => onStartNew(),
-              ),
+            _DifficultyChip(
+              difficulty: Difficulty.easy,
+              onTap: onStartNew,
             ),
             const SizedBox(width: 8),
-            Expanded(
-              child: _DifficultyChip(
-                difficulty: Difficulty.medium,
-                zenEnabled: zenEnabled,
-                onTap: () => onStartNew(),
-              ),
+            _DifficultyChip(
+              difficulty: Difficulty.medium,
+              onTap: onStartNew,
             ),
             const SizedBox(width: 8),
-            Expanded(
-              child: _DifficultyChip(
-                difficulty: Difficulty.hard,
-                zenEnabled: zenEnabled,
-                onTap: () => onStartNew(),
-              ),
+            _DifficultyChip(
+              difficulty: Difficulty.hard,
+              onTap: onStartNew,
             ),
             const SizedBox(width: 8),
-            Expanded(
-              child: _DifficultyChip(
-                difficulty: Difficulty.expert,
-                zenEnabled: zenEnabled,
-                onTap: () => onStartNew(),
-              ),
+            _DifficultyChip(
+              difficulty: Difficulty.expert,
+              onTap: onStartNew,
             ),
           ],
         ),
@@ -805,40 +836,40 @@ class _NewGameSection extends StatelessWidget {
 class _DifficultyChip extends StatelessWidget {
   const _DifficultyChip({
     required this.difficulty,
-    required this.zenEnabled,
     required this.onTap,
   });
 
   final Difficulty difficulty;
-  final bool zenEnabled;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: difficulty.color.withOpacity(0.12),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: difficulty.color.withOpacity(0.25),
-          ),
-        ),
-        child: Column(
-          children: [
-            Icon(difficulty.icon, color: difficulty.color, size: 18),
-            const SizedBox(height: 4),
-            Text(
-              difficulty.displayName,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: difficulty.color,
-                    fontWeight: FontWeight.w600,
-                    fontSize: 10,
-                  ),
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          decoration: BoxDecoration(
+            color: difficulty.color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: difficulty.color.withOpacity(0.2),
             ),
-          ],
+          ),
+          child: Column(
+            children: [
+              Icon(difficulty.icon, color: difficulty.color, size: 18),
+              const SizedBox(height: 4),
+              Text(
+                difficulty.displayName,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: difficulty.color,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 10,
+                    ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -888,16 +919,16 @@ class _SecondaryActionButton extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(color: AppColors.surfaceBorder),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: AppColors.textMuted, size: 18),
+            Icon(icon, color: AppColors.textMuted, size: 16),
             const SizedBox(width: 8),
             Text(
               label,

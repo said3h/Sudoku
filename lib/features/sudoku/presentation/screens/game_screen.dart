@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 
 import '../../../../core/services/feedback_service.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../data/models/sudoku_stats.dart';
+import '../../data/sudoku_game_storage.dart';
 import '../providers/sudoku_game_provider.dart';
 import '../widgets/game_header.dart';
 import '../widgets/number_pad.dart';
@@ -20,10 +22,17 @@ class GameScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    ref.listen<SudokuGameState>(sudokuGameProvider(config), (previous, next) async {
+    ref.listen<SudokuGameState>(sudokuGameProvider(config),
+        (previous, next) async {
       if (previous?.isComplete == true || !next.isComplete) return;
 
-      await ref.read(feedbackServiceProvider).softSuccess();
+      final feedback = ref.read(feedbackServiceProvider);
+
+      if (next.isDailyChallenge) {
+        await feedback.victorySpecial();
+      } else {
+        await feedback.softSuccess();
+      }
 
       if (!context.mounted) return;
       _showCompletedDialog(context, ref, next);
@@ -110,7 +119,8 @@ class GameScreen extends ConsumerWidget {
         return AlertDialog(
           backgroundColor: AppColors.surface,
           title: const Text('Reiniciar partida'),
-          content: const Text('Se generara un tablero nuevo con la misma dificultad.'),
+          content: const Text(
+              'Se generara un tablero nuevo con la misma dificultad.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
@@ -134,6 +144,12 @@ class GameScreen extends ConsumerWidget {
     WidgetRef ref,
     SudokuGameState state,
   ) async {
+    final stats = SudokuGameStorage.loadStats();
+    final todayKey = DateTime.now().toIso8601String().split('T').first;
+    final isDailyStreak =
+        state.isDailyChallenge && stats.lastCompletedDayKey == todayKey;
+    final isNewRecord = _checkNewRecord(state, stats);
+
     await showGeneralDialog<void>(
       context: context,
       barrierDismissible: false,
@@ -151,7 +167,9 @@ class GameScreen extends ConsumerWidget {
               border: Border.all(color: AppColors.surfaceBorder),
               boxShadow: [
                 BoxShadow(
-                  color: AppColors.accentBlue.withOpacity(0.18),
+                  color: state.isDailyChallenge
+                      ? AppColors.success.withOpacity(0.15)
+                      : AppColors.accentBlue.withOpacity(0.15),
                   blurRadius: 32,
                   spreadRadius: -8,
                 ),
@@ -162,38 +180,27 @@ class GameScreen extends ConsumerWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    width: 82,
-                    height: 82,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: AppColors.gradientPrimary,
-                    ),
-                    child: const Icon(
-                      Icons.emoji_events_rounded,
-                      color: AppColors.primary,
-                      size: 36,
-                    ),
-                  ).animate().scale(
-                        duration: const Duration(milliseconds: 420),
-                        curve: Curves.easeOutBack,
-                      ),
-                  const SizedBox(height: 18),
+                  _VictoryIcon(isDailyChallenge: state.isDailyChallenge),
+                  const SizedBox(height: 16),
                   Text(
-                    'Victoria impecable',
-                    style: Theme.of(context).textTheme.headlineMedium,
+                    _getVictoryTitle(state),
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   Text(
-                    state.isDailyChallenge
-                        ? 'Has completado el reto diario.'
-                        : state.isZenMode
-                            ? 'Sudoku resuelto en modo zen.'
-                            : 'Sudoku completado con acabado premium.',
+                    _getVictorySubtitle(state, isDailyStreak),
                     textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.bodyMedium,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
                   ),
-                  const SizedBox(height: 20),
+                  if (isNewRecord) ...[
+                    const SizedBox(height: 12),
+                    _NewRecordBadge(),
+                  ],
+                  const SizedBox(height: 18),
                   Row(
                     children: [
                       Expanded(
@@ -202,7 +209,7 @@ class GameScreen extends ConsumerWidget {
                           value: _formatDuration(state.elapsed),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: _VictoryMetric(
                           label: state.isZenMode ? 'Modo' : 'Errores',
@@ -211,7 +218,7 @@ class GameScreen extends ConsumerWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 22),
+                  const SizedBox(height: 20),
                   Row(
                     children: [
                       Expanded(
@@ -223,11 +230,13 @@ class GameScreen extends ConsumerWidget {
                           child: const Text('Stats'),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 10),
                       Expanded(
                         child: ElevatedButton(
                           onPressed: () {
-                            ref.read(sudokuGameProvider(config).notifier).resetGame();
+                            ref
+                                .read(sudokuGameProvider(config).notifier)
+                                .resetGame();
                             Navigator.of(context).pop();
                           },
                           child: const Text('Nueva'),
@@ -245,7 +254,7 @@ class GameScreen extends ConsumerWidget {
         return FadeTransition(
           opacity: animation,
           child: ScaleTransition(
-            scale: Tween<double>(begin: 0.92, end: 1).animate(
+            scale: Tween<double>(begin: 0.94, end: 1).animate(
               CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
             ),
             child: child,
@@ -255,10 +264,108 @@ class GameScreen extends ConsumerWidget {
     );
   }
 
+  bool _checkNewRecord(SudokuGameState state, SudokuStats stats) {
+    if (state.isZenMode) return false;
+    final key = _difficultyKey(state.cluesCount);
+    final currentBest = stats.bestTimesMs[key];
+    if (currentBest == null) return true;
+    return state.elapsed.inMilliseconds < currentBest;
+  }
+
+  String _difficultyKey(int cluesCount) {
+    if (cluesCount >= 40) return 'easy';
+    if (cluesCount >= 32) return 'medium';
+    if (cluesCount >= 26) return 'hard';
+    return 'expert';
+  }
+
+  String _getVictoryTitle(SudokuGameState state) {
+    if (state.isDailyChallenge) return 'Reto completado';
+    if (state.isZenMode) return 'Resuelto';
+    return 'Victoria';
+  }
+
+  String _getVictorySubtitle(SudokuGameState state, bool isDailyStreak) {
+    if (state.isDailyChallenge) {
+      return isDailyStreak ? 'Racha mantenida' : 'Reto diario completado';
+    }
+    if (state.isZenMode) return 'Modo zen completado';
+    return 'Sudoku resuelto con precision';
+  }
+
   String _formatDuration(Duration duration) {
     final minutes = duration.inMinutes.toString().padLeft(2, '0');
     final seconds = (duration.inSeconds % 60).toString().padLeft(2, '0');
     return '$minutes:$seconds';
+  }
+}
+
+class _VictoryIcon extends StatelessWidget {
+  const _VictoryIcon({required this.isDailyChallenge});
+
+  final bool isDailyChallenge;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 72,
+      height: 72,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: isDailyChallenge
+            ? LinearGradient(
+                colors: [
+                  AppColors.success,
+                  AppColors.success.withOpacity(0.7),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              )
+            : AppColors.gradientPrimary,
+      ),
+      child: Icon(
+        isDailyChallenge
+            ? Icons.check_circle_rounded
+            : Icons.emoji_events_rounded,
+        color: isDailyChallenge ? Colors.white : AppColors.primary,
+        size: 32,
+      ),
+    ).animate().scale(
+          duration: const Duration(milliseconds: 380),
+          curve: Curves.easeOutBack,
+        );
+  }
+}
+
+class _NewRecordBadge extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.accent.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.accent.withOpacity(0.25)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.auto_awesome,
+            color: AppColors.accent,
+            size: 14,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            'Nuevo record',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.accent,
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -274,16 +381,27 @@ class _VictoryMetric extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       decoration: BoxDecoration(
         color: AppColors.surfaceLight,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
         children: [
-          Text(label, style: Theme.of(context).textTheme.bodySmall),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.textMuted,
+                  fontSize: 11,
+                ),
+          ),
           const SizedBox(height: 4),
-          Text(value, style: Theme.of(context).textTheme.titleLarge),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
         ],
       ),
     );

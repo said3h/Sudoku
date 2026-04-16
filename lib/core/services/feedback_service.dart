@@ -34,6 +34,18 @@ class FeedbackService {
       await HapticFeedback.heavyImpact();
     }
   }
+
+  Future<void> victorySpecial() async {
+    final settings = _ref.read(appSettingsProvider);
+    if (settings.hapticsEnabled) {
+      await HapticFeedback.mediumImpact();
+    }
+    if (settings.soundEnabled) {
+      await SystemSound.play(SystemSoundType.click);
+      await Future.delayed(const Duration(milliseconds: 100));
+      await SystemSound.play(SystemSoundType.click);
+    }
+  }
 }
 
 final feedbackServiceProvider = Provider<FeedbackService>((ref) {
