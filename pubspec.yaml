@@ -20,7 +20,7 @@ dependencies:
   hive_flutter: ^1.1.0
   
   # UI & Animations
-  google_fonts: ^6.1.0
+  google_fonts: 6.1.0
   flutter_animate: ^4.3.0
   
   # Utils
