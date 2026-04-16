@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/providers/app_settings_provider.dart';
 import '../../data/models/saved_sudoku_game.dart';
 import '../../data/sudoku_game_storage.dart';
+import '../../domain/models/game_mode.dart';
 import '../../domain/models/sudoku_board.dart';
 import '../../domain/sudoku_generator.dart';
 import '../../domain/sudoku_validator.dart';
@@ -11,25 +13,47 @@ const _selectedCellUnset = Object();
 class GameSessionConfig {
   final int cluesCount;
   final bool resumeSavedGame;
+  final GameMode gameMode;
+  final String? dailyChallengeKey;
+  final int? seed;
+  final bool isZenMode;
 
   const GameSessionConfig({
     required this.cluesCount,
     this.resumeSavedGame = false,
+    this.gameMode = GameMode.classic,
+    this.dailyChallengeKey,
+    this.seed,
+    this.isZenMode = false,
   });
 
   @override
   bool operator ==(Object other) {
     return other is GameSessionConfig &&
         other.cluesCount == cluesCount &&
-        other.resumeSavedGame == resumeSavedGame;
+        other.resumeSavedGame == resumeSavedGame &&
+        other.gameMode == gameMode &&
+        other.dailyChallengeKey == dailyChallengeKey &&
+        other.seed == seed &&
+        other.isZenMode == isZenMode;
   }
 
   @override
-  int get hashCode => Object.hash(cluesCount, resumeSavedGame);
+  int get hashCode => Object.hash(
+        cluesCount,
+        resumeSavedGame,
+        gameMode,
+        dailyChallengeKey,
+        seed,
+        isZenMode,
+      );
 }
 
 class SudokuGameState {
   final int cluesCount;
+  final GameMode gameMode;
+  final String? dailyChallengeKey;
+  final bool isZenMode;
   final SudokuBoard puzzle;
   final SudokuBoard solution;
   final SudokuBoard currentBoard;
@@ -43,6 +67,9 @@ class SudokuGameState {
 
   const SudokuGameState({
     required this.cluesCount,
+    required this.gameMode,
+    required this.dailyChallengeKey,
+    required this.isZenMode,
     required this.puzzle,
     required this.solution,
     required this.currentBoard,
@@ -55,8 +82,15 @@ class SudokuGameState {
     this.mistakes = 0,
   });
 
+  bool get isDailyChallenge => gameMode == GameMode.daily;
+
+  Duration get elapsed => DateTime.now().difference(startTime);
+
   SudokuGameState copyWith({
     int? cluesCount,
+    GameMode? gameMode,
+    Object? dailyChallengeKey = _selectedCellUnset,
+    bool? isZenMode,
     SudokuBoard? puzzle,
     SudokuBoard? solution,
     SudokuBoard? currentBoard,
@@ -70,6 +104,11 @@ class SudokuGameState {
   }) {
     return SudokuGameState(
       cluesCount: cluesCount ?? this.cluesCount,
+      gameMode: gameMode ?? this.gameMode,
+      dailyChallengeKey: identical(dailyChallengeKey, _selectedCellUnset)
+          ? this.dailyChallengeKey
+          : dailyChallengeKey as String?,
+      isZenMode: isZenMode ?? this.isZenMode,
       puzzle: puzzle ?? this.puzzle,
       solution: solution ?? this.solution,
       currentBoard: currentBoard ?? this.currentBoard,
@@ -103,10 +142,10 @@ class _GameSnapshot {
 }
 
 class SudokuGameNotifier extends StateNotifier<SudokuGameState> {
-  final List<_GameSnapshot> _history = [];
-
-  SudokuGameNotifier({required GameSessionConfig config})
-      : super(_initialize(config)) {
+  SudokuGameNotifier({
+    required this.config,
+    required this.settingsRef,
+  }) : super(_initialize(config)) {
     final didResume = config.resumeSavedGame && SudokuGameStorage.hasSavedGame();
     if (!didResume) {
       SudokuGameStorage.recordGameStarted();
@@ -119,6 +158,10 @@ class SudokuGameNotifier extends StateNotifier<SudokuGameState> {
     }
   }
 
+  final GameSessionConfig config;
+  final Ref settingsRef;
+  final List<_GameSnapshot> _history = [];
+
   static SudokuGameState _initialize(GameSessionConfig config) {
     if (config.resumeSavedGame) {
       final savedGame = SudokuGameStorage.loadSavedGame();
@@ -127,14 +170,20 @@ class SudokuGameNotifier extends StateNotifier<SudokuGameState> {
       }
     }
 
-    return _createNewGame(config.cluesCount);
+    return _createNewGame(config);
   }
 
-  static SudokuGameState _createNewGame(int cluesCount) {
-    final (puzzle, solution) = SudokuGenerator.generatePuzzle(cluesCount);
+  static SudokuGameState _createNewGame(GameSessionConfig config) {
+    final (puzzle, solution) = SudokuGenerator.generatePuzzle(
+      config.cluesCount,
+      seed: config.seed,
+    );
 
     return SudokuGameState(
-      cluesCount: cluesCount,
+      cluesCount: config.cluesCount,
+      gameMode: config.gameMode,
+      dailyChallengeKey: config.dailyChallengeKey,
+      isZenMode: config.isZenMode,
       puzzle: puzzle,
       solution: solution,
       currentBoard: puzzle.clone(),
@@ -147,6 +196,9 @@ class SudokuGameNotifier extends StateNotifier<SudokuGameState> {
   static SudokuGameState _fromSavedGame(SavedSudokuGame savedGame) {
     return SudokuGameState(
       cluesCount: savedGame.cluesCount,
+      gameMode: savedGame.gameMode,
+      dailyChallengeKey: savedGame.dailyChallengeKey,
+      isZenMode: savedGame.isZenMode,
       puzzle: savedGame.puzzle,
       solution: savedGame.solution,
       currentBoard: savedGame.currentBoard,
@@ -177,20 +229,21 @@ class SudokuGameNotifier extends StateNotifier<SudokuGameState> {
     state = state.copyWith(selectedCell: (row, col));
   }
 
-  void enterNumber(int number) {
-    if (state.isComplete || number < 1 || number > 9) return;
+  bool enterNumber(int number) {
+    if (state.isComplete || number < 1 || number > 9) return false;
 
     final selected = state.selectedCell;
-    if (selected == null) return;
+    if (selected == null) return false;
 
     final (row, col) = selected;
-    if (state.givenCells.contains((row, col))) return;
+    if (state.givenCells.contains((row, col))) return false;
 
     if (state.isNoteMode) {
       _toggleNote(row, col, number);
-    } else {
-      _placeNumber(row, col, number);
+      return false;
     }
+
+    return _placeNumber(row, col, number);
   }
 
   void clearCell() {
@@ -263,13 +316,13 @@ class SudokuGameNotifier extends StateNotifier<SudokuGameState> {
     _setBoardState(newBoard, notes: notes, mistakes: state.mistakes);
   }
 
-  bool hasConflict(int row, int col) {
-    return SudokuValidator.hasConflict(state.currentBoard, row, col);
-  }
-
   void resetGame() {
     _history.clear();
-    state = _createNewGame(state.cluesCount);
+    state = _createNewGame(
+      config.copyWith(
+        isZenMode: settingsRef.read(appSettingsProvider).zenModeEnabled,
+      ),
+    );
     SudokuGameStorage.recordGameStarted();
     _persistProgress();
   }
@@ -296,9 +349,9 @@ class SudokuGameNotifier extends StateNotifier<SudokuGameState> {
     _persistProgress();
   }
 
-  void _placeNumber(int row, int col, int number) {
+  bool _placeNumber(int row, int col, int number) {
     final currentValue = state.currentBoard[row][col];
-    if (currentValue == number) return;
+    if (currentValue == number) return false;
 
     _pushHistory();
 
@@ -308,8 +361,13 @@ class SudokuGameNotifier extends StateNotifier<SudokuGameState> {
     final notes = _cloneNotes(state.notes);
     _clearRelatedNotes(notes, row, col, number);
 
-    final mistakes = state.mistakes + (state.solution[row][col] == number ? 0 : 1);
+    final isCorrect = state.solution[row][col] == number;
+    final mistakes = state.isZenMode || isCorrect
+        ? state.mistakes
+        : state.mistakes + 1;
+
     _setBoardState(newBoard, notes: notes, mistakes: mistakes);
+    return !isCorrect && !state.isZenMode;
   }
 
   void _pushHistory() {
@@ -342,10 +400,13 @@ class SudokuGameNotifier extends StateNotifier<SudokuGameState> {
 
   void _syncPersistence({required bool previouslyComplete}) {
     if (!previouslyComplete && state.isComplete) {
+      final completionDay = DateTime.now().toIso8601String().split('T').first;
       SudokuGameStorage.recordGameCompleted(
         cluesCount: state.cluesCount,
-        elapsed: DateTime.now().difference(state.startTime),
+        elapsed: state.elapsed,
         mistakes: state.mistakes,
+        gameMode: state.gameMode,
+        completedDayKey: completionDay,
       );
       SudokuGameStorage.clearSavedGame();
       return;
@@ -360,11 +421,14 @@ class SudokuGameNotifier extends StateNotifier<SudokuGameState> {
     SudokuGameStorage.saveGame(
       SavedSudokuGame(
         cluesCount: state.cluesCount,
+        gameMode: state.gameMode,
+        dailyChallengeKey: state.dailyChallengeKey,
         puzzle: state.puzzle,
         solution: state.solution,
         currentBoard: state.currentBoard,
         notes: state.notes,
         isNoteMode: state.isNoteMode,
+        isZenMode: state.isZenMode,
         selectedCell: state.selectedCell,
         isComplete: state.isComplete,
         startTime: state.startTime,
@@ -418,7 +482,32 @@ class SudokuGameNotifier extends StateNotifier<SudokuGameState> {
   }
 }
 
+extension on GameSessionConfig {
+  GameSessionConfig copyWith({
+    int? cluesCount,
+    bool? resumeSavedGame,
+    GameMode? gameMode,
+    Object? dailyChallengeKey = _selectedCellUnset,
+    Object? seed = _selectedCellUnset,
+    bool? isZenMode,
+  }) {
+    return GameSessionConfig(
+      cluesCount: cluesCount ?? this.cluesCount,
+      resumeSavedGame: resumeSavedGame ?? this.resumeSavedGame,
+      gameMode: gameMode ?? this.gameMode,
+      dailyChallengeKey: identical(dailyChallengeKey, _selectedCellUnset)
+          ? this.dailyChallengeKey
+          : dailyChallengeKey as String?,
+      seed: identical(seed, _selectedCellUnset) ? this.seed : seed as int?,
+      isZenMode: isZenMode ?? this.isZenMode,
+    );
+  }
+}
+
 final sudokuGameProvider = StateNotifierProvider.autoDispose
     .family<SudokuGameNotifier, SudokuGameState, GameSessionConfig>(
-  (ref, config) => SudokuGameNotifier(config: config),
+  (ref, config) => SudokuGameNotifier(
+    config: config,
+    settingsRef: ref,
+  ),
 );

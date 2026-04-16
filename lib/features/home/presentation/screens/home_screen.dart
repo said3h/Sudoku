@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/constants/difficulty.dart';
-import '../../../../core/providers/home_providers.dart';
+import '../../../../core/providers/app_settings_provider.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../shared/widgets/overlay_builder.dart';
-import '../../../stats/presentation/screens/stats_screen.dart';
 import '../../../sudoku/data/sudoku_game_storage.dart';
-import '../../../sudoku/presentation/screens/game_screen.dart';
+import '../../../sudoku/domain/models/game_mode.dart';
 import '../widgets/new_game_dialog.dart';
 
 class HomeScreen extends ConsumerWidget {
@@ -16,223 +16,352 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isNewGameOpen = ref.watch(isNewGameDialogOpenProvider);
-    final navigateToGame = ref.watch(navigateToGameProvider);
-
-    if (navigateToGame) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        ref.read(navigateToGameProvider.notifier).state = false;
-        final difficulty = ref.read(selectedDifficultyProvider);
-
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (_) => GameScreen(cluesCount: difficulty.cluesCount),
-          ),
-        );
-      });
-    }
+    final settings = ref.watch(appSettingsProvider);
+    final todayKey = DateTime.now().toIso8601String().split('T').first;
+    final dailySeed = todayKey.hashCode;
+    final savedGame = SudokuGameStorage.loadSavedGame();
+    final stats = SudokuGameStorage.loadStats();
 
     return Scaffold(
-      body: OverlayBuilder(
-        overlayBuilder: (context) {
-          if (isNewGameOpen) {
-            return const NewGameDialog();
-          }
-
-          return const SizedBox.shrink();
-        },
-        child: SafeArea(
-          child: Stack(
-            children: [
-              Container(
-                decoration: const BoxDecoration(
-                  gradient: AppColors.gradientBackground,
-                ),
+      body: SafeArea(
+        child: Stack(
+          children: [
+            Container(
+              decoration: const BoxDecoration(
+                gradient: AppColors.gradientBackground,
               ),
-              SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24),
-                  child: Column(
-                    children: [
-                      const SizedBox(height: 60),
-                      Column(
-                        children: [
-                          Container(
-                            width: 100,
-                            height: 100,
-                            decoration: BoxDecoration(
-                              gradient: AppColors.gradientPrimary,
-                              borderRadius: BorderRadius.circular(24),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: AppColors.accent.withOpacity(0.3),
-                                  blurRadius: 30,
-                                  spreadRadius: 5,
-                                ),
-                              ],
-                            ),
-                            child: const Icon(
-                              Icons.grid_on,
-                              size: 56,
-                              color: AppColors.primary,
-                            ),
-                          ).animate().scale(
-                                duration: const Duration(milliseconds: 600),
-                              ),
-                          const SizedBox(height: 24),
-                          Text(
-                            'SUDOKU',
-                            style:
-                                Theme.of(context).textTheme.displayLarge?.copyWith(
-                                      letterSpacing: 8,
-                                      color: AppColors.accent,
-                                    ),
-                          ).animate().fadeIn(
-                                delay: const Duration(milliseconds: 200),
-                              ),
-                          Text(
-                            'PREMIUM',
-                            style:
-                                Theme.of(context).textTheme.titleMedium?.copyWith(
-                                      letterSpacing: 12,
-                                      color: AppColors.textMuted,
-                                      fontWeight: FontWeight.w300,
-                                    ),
-                          ).animate().fadeIn(
-                                delay: const Duration(milliseconds: 400),
-                              ),
-                        ],
-                      ),
-                      const SizedBox(height: 80),
-                      _PrimaryButton(
-                        icon: Icons.play_arrow,
-                        label: 'Nueva Partida',
-                        subtitle: 'Comienza un nuevo desafio',
-                        onPressed: () {
-                          ref.read(isNewGameDialogOpenProvider.notifier).state =
-                              true;
-                        },
-                      ).animate().fadeIn(
-                            delay: const Duration(milliseconds: 600),
-                          ).slideY(
-                            begin: 0.3,
-                            duration: const Duration(milliseconds: 500),
-                          ),
-                      const SizedBox(height: 16),
-                      ValueListenableBuilder(
-                        valueListenable:
-                            SudokuGameStorage.currentGameListenable(),
-                        builder: (context, box, child) {
-                          final savedGame = SudokuGameStorage.loadSavedGame();
-                          final hasSavedGame = savedGame != null;
-
-                          return _SecondaryButton(
-                            icon: Icons.history,
-                            label: 'Continuar Partida',
-                            subtitle: hasSavedGame
-                                ? 'Reanuda tu ultimo juego'
-                                : 'No hay ninguna partida activa',
-                            onPressed: () {
-                              if (savedGame == null) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: const Text(
-                                      'No hay partidas guardadas',
-                                    ),
-                                    backgroundColor: AppColors.textMuted,
-                                    behavior: SnackBarBehavior.floating,
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  ),
-                                );
-                                return;
-                              }
-
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (_) => GameScreen(
-                                    cluesCount: savedGame.cluesCount,
-                                    resumeSavedGame: true,
-                                  ),
-                                ),
-                              );
-                            },
-                          );
-                        },
-                      ).animate().fadeIn(
-                            delay: const Duration(milliseconds: 800),
-                          ).slideY(
-                            begin: 0.3,
-                            duration: const Duration(milliseconds: 500),
-                          ),
-                      const SizedBox(height: 16),
-                      _SecondaryButton(
-                        icon: Icons.bar_chart,
-                        label: 'Estadisticas',
-                        subtitle: 'Revisa tu progreso',
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const StatsScreen(),
-                            ),
-                          );
-                        },
-                      ).animate().fadeIn(
-                            delay: const Duration(milliseconds: 1000),
-                          ).slideY(
-                            begin: 0.3,
-                            duration: const Duration(milliseconds: 500),
-                          ),
-                      const SizedBox(height: 16),
-                      _SecondaryButton(
-                        icon: Icons.settings,
-                        label: 'Ajustes',
-                        subtitle: 'Personaliza tu experiencia',
-                        onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: const Text('Ajustes proximamente...'),
-                              backgroundColor: AppColors.textMuted,
-                              behavior: SnackBarBehavior.floating,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                          );
-                        },
-                      ).animate().fadeIn(
-                            delay: const Duration(milliseconds: 1200),
-                          ).slideY(
-                            begin: 0.3,
-                            duration: const Duration(milliseconds: 500),
-                          ),
-                      const SizedBox(height: 60),
-                      Text(
-                        'Dificultad rapida',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              letterSpacing: 2,
-                            ),
-                      ),
-                      const SizedBox(height: 12),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                        children: Difficulty.values.map((difficulty) {
-                          return _QuickDifficultyChip(difficulty: difficulty)
-                              .animate()
-                              .fadeIn(
-                                delay: Duration(
-                                  milliseconds: 1400 + (50 * difficulty.index),
-                                ),
-                              )
-                              .scale();
-                        }).toList(),
-                      ),
-                      const SizedBox(height: 40),
+            ),
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.accentBlue.withOpacity(0.08),
+                      Colors.transparent,
+                      AppColors.accent.withOpacity(0.05),
                     ],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
                   ),
                 ),
               ),
+            ),
+            SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
+              child: Column(
+                children: [
+                  const SizedBox(height: 18),
+                  _PremiumHero(
+                    currentStreak: stats.currentStreak,
+                    zenEnabled: settings.zenModeEnabled,
+                  ),
+                  const SizedBox(height: 26),
+                  _PrimaryActionCard(
+                    icon: Icons.play_arrow_rounded,
+                    title: 'Nueva partida',
+                    subtitle: 'Comienza una sesion elegante y fluida.',
+                    onTap: () => _startNewGame(context, settings.zenModeEnabled),
+                  ).animate().fadeIn(delay: 120.ms).slideY(begin: 0.06),
+                  const SizedBox(height: 14),
+                  _SecondaryActionCard(
+                    icon: Icons.local_fire_department_rounded,
+                    title: 'Reto diario',
+                    subtitle: 'Puzzle del dia con semilla fija y progreso propio.',
+                    trailing: Text(
+                      todayKey.substring(5),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    onTap: () {
+                      context.push(
+                        '${AppConstants.routeGame}?clues=${Difficulty.hard.cluesCount}'
+                        '&dailyKey=$todayKey&seed=$dailySeed'
+                        '&zen=${settings.zenModeEnabled}&resume=false',
+                      );
+                    },
+                  ).animate().fadeIn(delay: 180.ms).slideY(begin: 0.06),
+                  const SizedBox(height: 14),
+                  _SecondaryActionCard(
+                    icon: Icons.history_rounded,
+                    title: 'Continuar partida',
+                    subtitle: savedGame == null
+                        ? 'No hay ninguna sesion activa.'
+                        : 'Retoma exactamente donde la dejaste.',
+                    trailing: savedGame == null
+                        ? null
+                        : _ModeBadge(
+                            label: savedGame.gameMode == GameMode.daily
+                                ? 'Diaria'
+                                : savedGame.isZenMode
+                                    ? 'Zen'
+                                    : 'Clasica',
+                          ),
+                    onTap: () {
+                      if (savedGame == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('No hay partidas guardadas'),
+                          ),
+                        );
+                        return;
+                      }
+                      context.push(
+                        '${AppConstants.routeGame}?clues=${savedGame.cluesCount}'
+                        '&resume=true',
+                      );
+                    },
+                  ).animate().fadeIn(delay: 240.ms).slideY(begin: 0.06),
+                  const SizedBox(height: 14),
+                  _SecondaryActionCard(
+                    icon: Icons.insights_rounded,
+                    title: 'Estadisticas',
+                    subtitle: 'Mejores tiempos, streak y vision global.',
+                    onTap: () => context.push(AppConstants.routeStats),
+                  ).animate().fadeIn(delay: 300.ms).slideY(begin: 0.06),
+                  const SizedBox(height: 14),
+                  _SecondaryActionCard(
+                    icon: Icons.tune_rounded,
+                    title: 'Ajustes',
+                    subtitle: 'Haptics, sonido y modo zen por defecto.',
+                    onTap: () => context.push(AppConstants.routeSettings),
+                  ).animate().fadeIn(delay: 360.ms).slideY(begin: 0.06),
+                  const SizedBox(height: 26),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Dificultad rapida',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            letterSpacing: 1.8,
+                          ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 10,
+                    runSpacing: 10,
+                    children: Difficulty.values.map((difficulty) {
+                      return ActionChip(
+                        backgroundColor: difficulty.color.withOpacity(0.14),
+                        side: BorderSide(color: difficulty.color.withOpacity(0.26)),
+                        label: Text(
+                          difficulty.displayName,
+                          style: TextStyle(color: difficulty.color),
+                        ),
+                        onPressed: () {
+                          context.push(
+                            '${AppConstants.routeGame}?clues=${difficulty.cluesCount}'
+                            '&zen=${settings.zenModeEnabled}&resume=false',
+                          );
+                        },
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _startNewGame(BuildContext context, bool zenModeEnabled) async {
+    final result = await showDialog<NewGameDialogResult>(
+      context: context,
+      builder: (_) => const NewGameDialog(),
+    );
+
+    if (result == null || !context.mounted) return;
+    context.push(
+      '${AppConstants.routeGame}?clues=${result.difficulty.cluesCount}'
+      '&zen=$zenModeEnabled&resume=false',
+    );
+  }
+}
+
+class _PremiumHero extends StatelessWidget {
+  const _PremiumHero({
+    required this.currentStreak,
+    required this.zenEnabled,
+  });
+
+  final int currentStreak;
+  final bool zenEnabled;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(28),
+        gradient: AppColors.heroGradient,
+        border: Border.all(color: AppColors.surfaceBorder),
+        boxShadow: [
+          BoxShadow(
+            color: AppColors.accentBlue.withOpacity(0.18),
+            blurRadius: 38,
+            spreadRadius: -10,
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 68,
+                height: 68,
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.white.withOpacity(0.08)),
+                ),
+                child: const Icon(
+                  Icons.grid_view_rounded,
+                  size: 34,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'SUDOKU',
+                      style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                            letterSpacing: 6,
+                          ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Premium Edition',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: AppColors.accentLight,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+              _ModeBadge(label: zenEnabled ? 'Zen on' : 'Classic'),
+            ],
+          ),
+          const SizedBox(height: 18),
+          Row(
+            children: [
+              Expanded(
+                child: _HeroMetric(
+                  title: 'Streak',
+                  value: '$currentStreak dias',
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: _HeroMetric(
+                  title: 'Sensacion',
+                  value: 'Ultra smooth',
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeroMetric extends StatelessWidget {
+  const _HeroMetric({
+    required this.title,
+    required this.value,
+  });
+
+  final String title;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: Theme.of(context).textTheme.bodySmall),
+          const SizedBox(height: 4),
+          Text(value, style: Theme.of(context).textTheme.titleMedium),
+        ],
+      ),
+    );
+  }
+}
+
+class _PrimaryActionCard extends StatelessWidget {
+  const _PrimaryActionCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(24),
+      child: Ink(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          gradient: AppColors.gradientPrimary,
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.accent.withOpacity(0.2),
+              blurRadius: 30,
+              spreadRadius: -10,
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(22),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.18),
+                  borderRadius: BorderRadius.circular(18),
+                ),
+                child: Icon(icon, color: AppColors.primary, size: 30),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            color: AppColors.primary,
+                          ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: AppColors.primaryLight,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.arrow_forward_rounded, color: AppColors.primary),
             ],
           ),
         ),
@@ -241,178 +370,90 @@ class HomeScreen extends ConsumerWidget {
   }
 }
 
-class _PrimaryButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String subtitle;
-  final VoidCallback onPressed;
-
-  const _PrimaryButton({
+class _SecondaryActionCard extends StatelessWidget {
+  const _SecondaryActionCard({
     required this.icon,
-    required this.label,
+    required this.title,
     required this.subtitle,
-    required this.onPressed,
+    required this.onTap,
+    this.trailing,
   });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: onPressed,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          gradient: AppColors.gradientPrimary,
-          borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: AppColors.accent.withOpacity(0.25),
-              blurRadius: 20,
-              spreadRadius: 2,
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.2),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: AppColors.accent, size: 32),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
-                    ),
-                  ),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppColors.primaryLight,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Icon(
-              Icons.arrow_forward_ios,
-              color: AppColors.primary,
-              size: 20,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _SecondaryButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String subtitle;
-  final VoidCallback onPressed;
-
-  const _SecondaryButton({
-    required this.icon,
-    required this.label,
-    required this.subtitle,
-    required this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onPressed,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(22),
+      child: Ink(
         decoration: BoxDecoration(
           color: AppColors.surface,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppColors.surfaceLight),
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: AppColors.surfaceBorder),
         ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: AppColors.surfaceLight,
-                borderRadius: BorderRadius.circular(10),
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Row(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceLight,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Icon(icon, color: AppColors.accentBlue),
               ),
-              child: Icon(icon, color: AppColors.textSecondary, size: 24),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  Text(
-                    subtitle,
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ],
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 3),
+                    Text(subtitle, style: Theme.of(context).textTheme.bodySmall),
+                  ],
+                ),
               ),
-            ),
-            const Icon(
-              Icons.arrow_forward_ios,
-              color: AppColors.textMuted,
-              size: 16,
-            ),
-          ],
+              if (trailing != null) ...[
+                trailing!,
+                const SizedBox(width: 10),
+              ],
+              const Icon(Icons.arrow_forward_ios_rounded,
+                  color: AppColors.textMuted, size: 16),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-class _QuickDifficultyChip extends ConsumerWidget {
-  final Difficulty difficulty;
+class _ModeBadge extends StatelessWidget {
+  const _ModeBadge({required this.label});
 
-  const _QuickDifficultyChip({
-    required this.difficulty,
-  });
+  final String label;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return InkWell(
-      onTap: () {
-        ref.read(selectedDifficultyProvider.notifier).state = difficulty;
-        ref.read(isNewGameDialogOpenProvider.notifier).state = true;
-      },
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: difficulty.color.withOpacity(0.15),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Text(
-          difficulty.displayName,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: difficulty.color,
-          ),
-        ),
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+      decoration: BoxDecoration(
+        color: AppColors.accentBlue.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: AppColors.accentBlue.withOpacity(0.28)),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColors.accentBlueLight,
+              fontWeight: FontWeight.w600,
+            ),
       ),
     );
   }

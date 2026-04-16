@@ -4,115 +4,213 @@ import '../../../../core/theme/app_colors.dart';
 import '../providers/sudoku_game_provider.dart';
 
 class GameHeader extends StatelessWidget {
-  final SudokuGameState gameState;
-  final VoidCallback onRestart;
-
   const GameHeader({
     super.key,
     required this.gameState,
+    required this.onBack,
     required this.onRestart,
   });
+
+  final SudokuGameState gameState;
+  final VoidCallback onBack;
+  final VoidCallback onRestart;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      child: Row(
+      padding: const EdgeInsets.fromLTRB(18, 12, 18, 8),
+      child: Column(
         children: [
-          IconButton(
-            onPressed: () => Navigator.of(context).pop(),
-            icon: const Icon(
-              Icons.arrow_back_ios_new,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          Expanded(
-            child: Column(
-              children: [
-                Text(
-                  'Sudoku',
-                  style: Theme.of(context).textTheme.titleLarge,
+          Row(
+            children: [
+              _CircleButton(
+                icon: Icons.arrow_back_ios_new_rounded,
+                onTap: onBack,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Sudoku', style: Theme.of(context).textTheme.titleLarge),
+                    const SizedBox(height: 2),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _MiniBadge(
+                          label: gameState.isDailyChallenge ? 'Reto diario' : 'Clasico',
+                          color: gameState.isDailyChallenge
+                              ? AppColors.accentBlue
+                              : AppColors.accent,
+                        ),
+                        if (gameState.isZenMode)
+                          const _MiniBadge(
+                            label: 'Zen',
+                            color: AppColors.success,
+                          ),
+                      ],
+                    ),
+                  ],
                 ),
-                Text(
-                  gameState.isComplete ? 'Completado' : 'En curso',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: gameState.isComplete
-                            ? AppColors.success
-                            : AppColors.textMuted,
-                        letterSpacing: 1.2,
-                      ),
+              ),
+              _CircleButton(
+                icon: Icons.refresh_rounded,
+                onTap: onRestart,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: _InfoCard(
+                  icon: Icons.timer_outlined,
+                  accent: AppColors.accentBlue,
+                  label: 'Tiempo',
+                  valueBuilder: () => _formatDuration(gameState.elapsed),
+                  live: true,
                 ),
-              ],
-            ),
-          ),
-          _InfoChip(
-            icon: Icons.error_outline,
-            color: AppColors.error,
-            label: '${gameState.mistakes}',
-          ),
-          const SizedBox(width: 8),
-          StreamBuilder<int>(
-            stream: Stream.periodic(const Duration(seconds: 1), (tick) => tick),
-            initialData: 0,
-            builder: (context, snapshot) {
-              final elapsed = DateTime.now().difference(gameState.startTime);
-              final minutes = elapsed.inMinutes.toString().padLeft(2, '0');
-              final seconds = (elapsed.inSeconds % 60).toString().padLeft(2, '0');
-
-              return _InfoChip(
-                icon: Icons.timer_outlined,
-                color: AppColors.accent,
-                label: '$minutes:$seconds',
-              );
-            },
-          ),
-          const SizedBox(width: 4),
-          IconButton(
-            onPressed: onRestart,
-            icon: const Icon(
-              Icons.refresh_rounded,
-              color: AppColors.textPrimary,
-            ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _InfoCard(
+                  icon: Icons.auto_awesome_rounded,
+                  accent: AppColors.accent,
+                  label: gameState.isZenMode ? 'Modo' : 'Errores',
+                  valueBuilder: () => gameState.isZenMode ? 'Zen' : '${gameState.mistakes}',
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
+
+  String _formatDuration(Duration duration) {
+    final minutes = duration.inMinutes.toString().padLeft(2, '0');
+    final seconds = (duration.inSeconds % 60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
+  }
 }
 
-class _InfoChip extends StatelessWidget {
-  final IconData icon;
-  final Color color;
-  final String label;
-
-  const _InfoChip({
+class _CircleButton extends StatelessWidget {
+  const _CircleButton({
     required this.icon,
-    required this.color,
-    required this.label,
+    required this.onTap,
   });
+
+  final IconData icon;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Ink(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: AppColors.surfaceLight,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(color: AppColors.surfaceBorder),
+          ),
+          child: Icon(icon, size: 18, color: AppColors.textPrimary),
+        ),
+      ),
+    );
+  }
+}
+
+class _MiniBadge extends StatelessWidget {
+  const _MiniBadge({
+    required this.label,
+    required this.color,
+  });
+
+  final String label;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withOpacity(0.35)),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: color),
+      ),
+    );
+  }
+}
+
+class _InfoCard extends StatelessWidget {
+  const _InfoCard({
+    required this.icon,
+    required this.accent,
+    required this.label,
+    required this.valueBuilder,
+    this.live = false,
+  });
+
+  final IconData icon;
+  final Color accent;
+  final String label;
+  final String Function() valueBuilder;
+  final bool live;
+
+  @override
+  Widget build(BuildContext context) {
+    final content = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
         color: AppColors.surfaceLight,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: AppColors.surfaceBorder),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: color),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              color: AppColors.textPrimary,
-              fontWeight: FontWeight.w600,
+          Container(
+            width: 34,
+            height: 34,
+            decoration: BoxDecoration(
+              color: accent.withOpacity(0.14),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, size: 18, color: accent),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label, style: Theme.of(context).textTheme.bodySmall),
+                const SizedBox(height: 3),
+                Text(
+                  valueBuilder(),
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+              ],
             ),
           ),
         ],
       ),
+    );
+
+    if (!live) return content;
+
+    return StreamBuilder<int>(
+      stream: Stream.periodic(const Duration(seconds: 1), (tick) => tick),
+      initialData: 0,
+      builder: (context, snapshot) => content,
     );
   }
 }

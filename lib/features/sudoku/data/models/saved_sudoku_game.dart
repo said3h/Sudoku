@@ -1,12 +1,16 @@
 import '../../domain/models/sudoku_board.dart';
+import '../../domain/models/game_mode.dart';
 
 class SavedSudokuGame {
   final int cluesCount;
+  final GameMode gameMode;
+  final String? dailyChallengeKey;
   final SudokuBoard puzzle;
   final SudokuBoard solution;
   final SudokuBoard currentBoard;
   final Map<(int, int), Set<int>> notes;
   final bool isNoteMode;
+  final bool isZenMode;
   final (int, int)? selectedCell;
   final bool isComplete;
   final DateTime startTime;
@@ -14,11 +18,14 @@ class SavedSudokuGame {
 
   const SavedSudokuGame({
     required this.cluesCount,
+    required this.gameMode,
+    required this.dailyChallengeKey,
     required this.puzzle,
     required this.solution,
     required this.currentBoard,
     required this.notes,
     required this.isNoteMode,
+    required this.isZenMode,
     required this.selectedCell,
     required this.isComplete,
     required this.startTime,
@@ -31,11 +38,17 @@ class SavedSudokuGame {
 
     return SavedSudokuGame(
       cluesCount: map['cluesCount'] as int? ?? 32,
+      gameMode: GameMode.values.firstWhere(
+        (mode) => mode.name == map['gameMode'],
+        orElse: () => GameMode.classic,
+      ),
+      dailyChallengeKey: map['dailyChallengeKey'] as String?,
       puzzle: _boardFromDynamic(map['puzzle']),
       solution: _boardFromDynamic(map['solution']),
       currentBoard: _boardFromDynamic(map['currentBoard']),
       notes: _notesFromDynamic(map['notes']),
       isNoteMode: map['isNoteMode'] as bool? ?? false,
+      isZenMode: map['isZenMode'] as bool? ?? false,
       selectedCell: selectedCell is List && selectedCell.length == 2
           ? (selectedCell[0] as int, selectedCell[1] as int)
           : null,
@@ -50,11 +63,14 @@ class SavedSudokuGame {
   Map<String, dynamic> toMap() {
     return {
       'cluesCount': cluesCount,
+      'gameMode': gameMode.name,
+      'dailyChallengeKey': dailyChallengeKey,
       'puzzle': _boardToDynamic(puzzle),
       'solution': _boardToDynamic(solution),
       'currentBoard': _boardToDynamic(currentBoard),
       'notes': _notesToDynamic(notes),
       'isNoteMode': isNoteMode,
+      'isZenMode': isZenMode,
       'selectedCell': selectedCell == null
           ? null
           : [selectedCell!.$1, selectedCell!.$2],

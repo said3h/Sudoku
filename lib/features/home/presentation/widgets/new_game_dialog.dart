@@ -1,20 +1,43 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
+
 import '../../../../core/constants/difficulty.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/providers/home_providers.dart';
 
-class NewGameDialog extends ConsumerWidget {
-  const NewGameDialog({super.key});
+class NewGameDialogResult {
+  final Difficulty difficulty;
+
+  const NewGameDialogResult({
+    required this.difficulty,
+  });
+}
+
+class NewGameDialog extends StatefulWidget {
+  const NewGameDialog({
+    super.key,
+    this.initialDifficulty = Difficulty.medium,
+  });
+
+  final Difficulty initialDifficulty;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final selectedDifficulty = ref.watch(selectedDifficultyProvider);
+  State<NewGameDialog> createState() => _NewGameDialogState();
+}
 
+class _NewGameDialogState extends State<NewGameDialog> {
+  late Difficulty _selectedDifficulty;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedDifficulty = widget.initialDifficulty;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Dialog(
       backgroundColor: AppColors.surface,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
       child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -22,39 +45,52 @@ class NewGameDialog extends ConsumerWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.games_outlined, color: AppColors.accent, size: 28),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppColors.accentSoft,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: const Icon(
+                    Icons.grid_view_rounded,
+                    color: AppColors.accent,
+                    size: 26,
+                  ),
+                ),
                 const SizedBox(width: 12),
-                Text(
-                  'Nueva Partida',
-                  style: Theme.of(context).textTheme.titleLarge,
+                Expanded(
+                  child: Text(
+                    'Nueva partida',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 22),
             Text(
-              'Selecciona la dificultad',
+              'Elige la dificultad para empezar una sesion premium.',
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             const SizedBox(height: 20),
             ...Difficulty.values.map((difficulty) {
-              final isSelected = difficulty == selectedDifficulty;
+              final isSelected = difficulty == _selectedDifficulty;
               return _DifficultyOption(
                 difficulty: difficulty,
                 isSelected: isSelected,
-                onTap: () {
-                  ref.read(selectedDifficultyProvider.notifier).state = difficulty;
-                },
-              ).animate().fade(delay: Duration(milliseconds: 50 * difficulty.index.toInt()))
-                  .slideX(begin: 0.2, duration: const Duration(milliseconds: 300));
+                onTap: () => setState(() => _selectedDifficulty = difficulty),
+              ).animate().fade(
+                    delay: Duration(milliseconds: 40 * difficulty.index),
+                  ).slideX(
+                    begin: 0.08,
+                    duration: const Duration(milliseconds: 240),
+                  );
             }),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: () {
-                      ref.read(isNewGameDialogOpenProvider.notifier).state = false;
-                    },
+                    onPressed: () => Navigator.of(context).pop(),
                     child: const Text('Cancelar'),
                   ),
                 ),
@@ -62,8 +98,9 @@ class NewGameDialog extends ConsumerWidget {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
-                      ref.read(isNewGameDialogOpenProvider.notifier).state = false;
-                      ref.read(navigateToGameProvider.notifier).state = true;
+                      Navigator.of(context).pop(
+                        NewGameDialogResult(difficulty: _selectedDifficulty),
+                      );
                     },
                     child: const Text('Jugar'),
                   ),
@@ -78,66 +115,63 @@ class NewGameDialog extends ConsumerWidget {
 }
 
 class _DifficultyOption extends StatelessWidget {
-  final Difficulty difficulty;
-  final bool isSelected;
-  final VoidCallback onTap;
-
   const _DifficultyOption({
     required this.difficulty,
     required this.isSelected,
     required this.onTap,
   });
 
+  final Difficulty difficulty;
+  final bool isSelected;
+  final VoidCallback onTap;
+
   @override
   Widget build(BuildContext context) {
     return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      duration: const Duration(milliseconds: 220),
+      margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: isSelected ? difficulty.color.withOpacity(0.15) : AppColors.surfaceLight,
-        borderRadius: BorderRadius.circular(12),
+        color: isSelected ? difficulty.color.withOpacity(0.14) : AppColors.surfaceLight,
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isSelected ? difficulty.color : Colors.transparent,
-          width: 2,
+          color: isSelected ? difficulty.color : AppColors.surfaceBorder,
         ),
       ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Row(
-          children: [
-            Icon(
-              difficulty.icon,
-              color: isSelected ? difficulty.color : AppColors.textMuted,
-              size: 24,
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    difficulty.displayName,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: isSelected ? difficulty.color : AppColors.textPrimary,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Icon(difficulty.icon, color: difficulty.color),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      difficulty.displayName,
+                      style: Theme.of(context).textTheme.titleMedium,
                     ),
-                  ),
-                  Text(
-                    difficulty.description,
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ],
+                    const SizedBox(height: 3),
+                    Text(
+                      difficulty.description,
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ],
+                ),
               ),
-            ),
-            if (isSelected)
-              Icon(
-                Icons.check_circle,
-                color: difficulty.color,
-                size: 24,
+              AnimatedOpacity(
+                duration: const Duration(milliseconds: 180),
+                opacity: isSelected ? 1 : 0,
+                child: Icon(
+                  Icons.check_circle_rounded,
+                  color: difficulty.color,
+                ),
               ),
-          ],
+            ],
+          ),
         ),
       ),
     );

@@ -3,6 +3,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/difficulty.dart';
+import '../domain/models/game_mode.dart';
 import 'models/saved_sudoku_game.dart';
 import 'models/sudoku_stats.dart';
 
@@ -38,6 +39,11 @@ class SudokuGameStorage {
     _currentGameBox.delete(currentGameKey);
   }
 
+  static Future<void> flush() async {
+    await _currentGameBox.flush();
+    await _statsBox.flush();
+  }
+
   static SudokuStats loadStats() {
     final raw = _statsBox.get(statsKey);
     if (raw is! Map) return const SudokuStats();
@@ -61,12 +67,19 @@ class SudokuGameStorage {
     required int cluesCount,
     required Duration elapsed,
     required int mistakes,
+    required GameMode gameMode,
+    required String? completedDayKey,
   }) {
     final stats = loadStats();
     final difficultyKey = _difficultyKey(cluesCount);
     final bestTimes = Map<String, int>.from(stats.bestTimesMs);
     final elapsedMs = elapsed.inMilliseconds;
     final bestTime = bestTimes[difficultyKey];
+    final streak = _nextStreak(
+      currentStreak: stats.currentStreak,
+      previousDayKey: stats.lastCompletedDayKey,
+      completedDayKey: completedDayKey,
+    );
 
     if (bestTime == null || elapsedMs < bestTime) {
       bestTimes[difficultyKey] = elapsedMs;
@@ -78,10 +91,48 @@ class SudokuGameStorage {
           .copyWith(
             gamesCompleted: stats.gamesCompleted + 1,
             totalMistakes: stats.totalMistakes + mistakes,
+            currentStreak: streak,
+            bestStreak: streak > stats.bestStreak ? streak : stats.bestStreak,
+            dailyChallengesCompleted: stats.dailyChallengesCompleted +
+                (gameMode == GameMode.daily ? 1 : 0),
+            lastCompletedDayKey: completedDayKey,
             bestTimesMs: bestTimes,
           )
           .toMap(),
     );
+  }
+
+  static int _nextStreak({
+    required int currentStreak,
+    required String? previousDayKey,
+    required String? completedDayKey,
+  }) {
+    if (completedDayKey == null) {
+      return currentStreak;
+    }
+
+    if (previousDayKey == completedDayKey) {
+      return currentStreak;
+    }
+
+    if (previousDayKey == null) {
+      return 1;
+    }
+
+    final previous = DateTime.tryParse(previousDayKey);
+    final completed = DateTime.tryParse(completedDayKey);
+    if (previous == null || completed == null) {
+      return 1;
+    }
+
+    final dayDifference = completed.difference(previous).inDays;
+    if (dayDifference == 1) {
+      return currentStreak + 1;
+    }
+    if (dayDifference <= 0) {
+      return currentStreak;
+    }
+    return 1;
   }
 
   static String _difficultyKey(int cluesCount) {

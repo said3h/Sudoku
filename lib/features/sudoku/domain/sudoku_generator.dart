@@ -3,21 +3,24 @@ import 'models/sudoku_board.dart';
 import 'sudoku_solver.dart';
 
 class SudokuGenerator {
-  static final Random _random = Random();
-
   /// Generates a complete solved board.
-  static SudokuBoard generateFullBoard() {
+  static SudokuBoard generateFullBoard({int? seed}) {
+    final random = seed == null ? Random() : Random(seed);
     final board = List.generate(9, (_) => List<int?>.filled(9, null));
 
-    _fillBoard(board);
+    _fillBoard(board, random);
     return board;
   }
 
   /// Generates a puzzle board by removing numbers from a solved board.
   /// Guaranteed to have a unique solution.
-  static (SudokuBoard puzzle, SudokuBoard solution) generatePuzzle(int cluesCount) {
+  static (SudokuBoard puzzle, SudokuBoard solution) generatePuzzle(
+    int cluesCount, {
+    int? seed,
+  }) {
+    final random = seed == null ? Random() : Random(seed);
     // Generate full solved board
-    final solution = generateFullBoard();
+    final solution = generateFullBoard(seed: seed);
 
     // Clone for puzzle
     final puzzle = solution.clone();
@@ -29,7 +32,7 @@ class SudokuGenerator {
         positions.add((r, c));
       }
     }
-    positions.shuffle(_random);
+    positions.shuffle(random);
 
     // Remove cells while maintaining unique solution
     int removed = 0;
@@ -53,19 +56,19 @@ class SudokuGenerator {
   }
 
   /// Fills an empty board with valid numbers using randomized backtracking.
-  static bool _fillBoard(SudokuBoard board) {
+  static bool _fillBoard(SudokuBoard board, Random random) {
     final empty = _findEmptyCell(board);
     if (empty == null) return true; // Board complete
 
     final (row, col) = empty;
 
     // Try numbers in random order
-    final numbers = List.generate(9, (i) => i + 1)..shuffle(_random);
+    final numbers = List.generate(9, (i) => i + 1)..shuffle(random);
 
     for (final num in numbers) {
       if (board.isValidMove(row, col, num)) {
         board[row][col] = num;
-        if (_fillBoard(board)) return true;
+        if (_fillBoard(board, random)) return true;
         board[row][col] = null; // Backtrack
       }
     }

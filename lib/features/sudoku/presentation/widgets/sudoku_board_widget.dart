@@ -4,13 +4,6 @@ import '../../../../core/theme/app_colors.dart';
 import '../../domain/models/sudoku_board.dart';
 
 class SudokuBoardWidget extends StatelessWidget {
-  final SudokuBoard currentBoard;
-  final Set<(int, int)> givenCells;
-  final (int, int)? selectedCell;
-  final SudokuBoard solution;
-  final Map<(int, int), Set<int>> notes;
-  final void Function(int row, int col) onCellTap;
-
   const SudokuBoardWidget({
     super.key,
     required this.currentBoard,
@@ -18,41 +11,194 @@ class SudokuBoardWidget extends StatelessWidget {
     required this.selectedCell,
     required this.solution,
     required this.notes,
+    required this.isZenMode,
     required this.onCellTap,
   });
+
+  final SudokuBoard currentBoard;
+  final Set<(int, int)> givenCells;
+  final (int, int)? selectedCell;
+  final SudokuBoard solution;
+  final Map<(int, int), Set<int>> notes;
+  final bool isZenMode;
+  final void Function(int row, int col) onCellTap;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 18),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 420),
-          child: AspectRatio(
-            aspectRatio: 1,
-            child: LayoutBuilder(
-              builder: (context, constraints) {
-                final cellSize = constraints.maxWidth / 9;
+          constraints: const BoxConstraints(maxWidth: 470),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  AppColors.surface.withOpacity(0.94),
+                  AppColors.boardBackground,
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(28),
+              border: Border.all(color: AppColors.surfaceBorder),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.24),
+                  blurRadius: 30,
+                  spreadRadius: -12,
+                  offset: const Offset(0, 20),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: AspectRatio(
+                aspectRatio: 1,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final cellSize = constraints.maxWidth / 9;
 
-                return Container(
-                  decoration: BoxDecoration(
-                    color: AppColors.boardBackground,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: AppColors.gridLineThick, width: 3),
-                  ),
-                  child: Column(
-                    children: List.generate(9, (row) {
-                      return Expanded(
-                        child: Row(
-                          children: List.generate(9, (col) {
-                            return _buildCell(row, col, cellSize);
-                          }),
+                    return ClipRRect(
+                      borderRadius: BorderRadius.circular(20),
+                      child: DecoratedBox(
+                        decoration: const BoxDecoration(
+                          color: AppColors.boardBackground,
                         ),
-                      );
-                    }),
-                  ),
-                );
-              },
+                        child: Stack(
+                          children: [
+                            Column(
+                              children: List.generate(9, (row) {
+                                return Expanded(
+                                  child: Row(
+                                    children: List.generate(9, (col) {
+                                      return Expanded(
+                                        child: _BoardCell(
+                                          row: row,
+                                          col: col,
+                                          size: cellSize,
+                                          currentBoard: currentBoard,
+                                          givenCells: givenCells,
+                                          selectedCell: selectedCell,
+                                          solution: solution,
+                                          notes: notes,
+                                          isZenMode: isZenMode,
+                                          onTap: () => onCellTap(row, col),
+                                        ),
+                                      );
+                                    }),
+                                  ),
+                                );
+                              }),
+                            ),
+                            IgnorePointer(child: _GridOverlay(cellSize: cellSize)),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BoardCell extends StatelessWidget {
+  const _BoardCell({
+    required this.row,
+    required this.col,
+    required this.size,
+    required this.currentBoard,
+    required this.givenCells,
+    required this.selectedCell,
+    required this.solution,
+    required this.notes,
+    required this.isZenMode,
+    required this.onTap,
+  });
+
+  final int row;
+  final int col;
+  final double size;
+  final SudokuBoard currentBoard;
+  final Set<(int, int)> givenCells;
+  final (int, int)? selectedCell;
+  final SudokuBoard solution;
+  final Map<(int, int), Set<int>> notes;
+  final bool isZenMode;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final value = currentBoard[row][col];
+    final isGiven = givenCells.contains((row, col));
+    final isSelected = selectedCell == (row, col);
+    final isPeer = _isPeer();
+    final isMatched = _isMatchedValue();
+    final hasConflict = !isGiven && !isZenMode && value != null && _hasConflict(value);
+    final cellNotes = notes[(row, col)];
+
+    var background = AppColors.cellBackground;
+    if (isPeer) background = AppColors.cellPeer;
+    if (isMatched) background = AppColors.cellMatched;
+    if (isSelected) background = AppColors.cellSelected;
+    if (hasConflict) background = AppColors.cellConflictSoft;
+
+    return TweenAnimationBuilder<double>(
+      tween: Tween<double>(begin: 0.96, end: isSelected ? 1 : 0.985),
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOutCubic,
+      builder: (context, scale, child) {
+        return Transform.scale(scale: scale, child: child);
+      },
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 160),
+            curve: Curves.easeOutCubic,
+            decoration: BoxDecoration(
+              color: background,
+              border: Border.all(
+                color: hasConflict
+                    ? AppColors.cellConflict.withOpacity(0.45)
+                    : AppColors.gridLine.withOpacity(0.68),
+                width: 0.35,
+              ),
+            ),
+            child: Center(
+              child: value != null
+                  ? AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 160),
+                      transitionBuilder: (child, animation) {
+                        return ScaleTransition(
+                          scale: Tween<double>(begin: 0.82, end: 1).animate(animation),
+                          child: FadeTransition(opacity: animation, child: child),
+                        );
+                      },
+                      child: Text(
+                        '$value',
+                        key: ValueKey('cell-$row-$col-$value'),
+                        style: TextStyle(
+                          fontSize: size * 0.44,
+                          fontWeight: isGiven ? FontWeight.w800 : FontWeight.w700,
+                          letterSpacing: -0.4,
+                          color: hasConflict
+                              ? AppColors.cellConflict
+                              : isGiven
+                                  ? AppColors.givenNumber
+                                  : AppColors.userNumber,
+                        ),
+                      ),
+                    )
+                  : cellNotes != null && cellNotes.isNotEmpty
+                      ? _NotesGrid(notes: cellNotes)
+                      : const SizedBox.shrink(),
             ),
           ),
         ),
@@ -60,142 +206,107 @@ class SudokuBoardWidget extends StatelessWidget {
     );
   }
 
-  Widget _buildCell(int row, int col, double cellSize) {
-    final value = currentBoard[row][col];
-    final isGiven = givenCells.contains((row, col));
-    final isSelected = selectedCell == (row, col);
-    final isHighlighted = _isHighlighted(row, col);
-    final isConflict = !isGiven && value != null && _hasConflict(row, col);
-    final cellNotes = notes[(row, col)];
-
-    Color backgroundColor = AppColors.cellBackground;
-    if (isSelected) {
-      backgroundColor = AppColors.cellSelected;
-    } else if (isConflict) {
-      backgroundColor = AppColors.error.withOpacity(0.08);
-    } else if (isHighlighted) {
-      backgroundColor = AppColors.cellHighlighted;
-    }
-
-    return GestureDetector(
-      onTap: () => onCellTap(row, col),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        width: cellSize,
-        height: cellSize,
-        decoration: BoxDecoration(
-          color: backgroundColor,
-          border: _getCellBorder(row, col),
-        ),
-        child: Center(
-          child: value != null
-              ? AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 200),
-                  child: Text(
-                    '$value',
-                    key: ValueKey('$row-$col-$value'),
-                    style: TextStyle(
-                      fontSize: cellSize * 0.45,
-                      fontWeight: isGiven ? FontWeight.w700 : FontWeight.w500,
-                      color: isConflict
-                          ? AppColors.cellConflict
-                          : isGiven
-                              ? AppColors.givenNumber
-                              : AppColors.userNumber,
-                    ),
-                  ),
-                )
-              : cellNotes != null
-                  ? _buildNotes(cellNotes)
-                  : const SizedBox.shrink(),
-        ),
-      ),
-    );
+  bool _isPeer() {
+    final active = selectedCell;
+    if (active == null) return false;
+    final (selectedRow, selectedCol) = active;
+    if (row == selectedRow && col == selectedCol) return false;
+    if (row == selectedRow || col == selectedCol) return true;
+    return (row ~/ 3) == (selectedRow ~/ 3) && (col ~/ 3) == (selectedCol ~/ 3);
   }
 
-  Widget _buildNotes(Set<int> cellNotes) {
-    return Padding(
-      padding: const EdgeInsets.all(3),
-      child: Column(
-        children: List.generate(3, (row) {
-          return Expanded(
-            child: Row(
-              children: List.generate(3, (col) {
-                final number = row * 3 + col + 1;
-                return Expanded(
-                  child: Center(
-                    child: Text(
-                      cellNotes.contains(number) ? '$number' : '',
-                      style: const TextStyle(
-                        fontSize: 9,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.noteColor,
-                      ),
-                    ),
-                  ),
-                );
-              }),
-            ),
-          );
-        }),
-      ),
-    );
+  bool _isMatchedValue() {
+    final active = selectedCell;
+    if (active == null) return false;
+    final activeValue = currentBoard[active.$1][active.$2];
+    final value = currentBoard[row][col];
+    return activeValue != null && value != null && activeValue == value;
   }
 
-  bool _hasConflict(int row, int col) {
-    final value = currentBoard[row][col];
-    if (value == null) return false;
-
-    for (int index = 0; index < 9; index++) {
+  bool _hasConflict(int value) {
+    for (var index = 0; index < 9; index++) {
       if (index != col && currentBoard[row][index] == value) return true;
       if (index != row && currentBoard[index][col] == value) return true;
     }
 
     final boxRow = (row ~/ 3) * 3;
     final boxCol = (col ~/ 3) * 3;
-    for (int r = boxRow; r < boxRow + 3; r++) {
-      for (int c = boxCol; c < boxCol + 3; c++) {
+    for (var r = boxRow; r < boxRow + 3; r++) {
+      for (var c = boxCol; c < boxCol + 3; c++) {
         if ((r != row || c != col) && currentBoard[r][c] == value) return true;
       }
     }
-
     return false;
   }
+}
 
-  bool _isHighlighted(int row, int col) {
-    final activeCell = selectedCell;
-    if (activeCell == null) return false;
+class _NotesGrid extends StatelessWidget {
+  const _NotesGrid({required this.notes});
 
-    final (selectedRow, selectedCol) = activeCell;
-    if (row == selectedRow && col == selectedCol) return true;
-    if (row == selectedRow || col == selectedCol) return true;
-    if ((row ~/ 3) == (selectedRow ~/ 3) && (col ~/ 3) == (selectedCol ~/ 3)) {
-      return true;
-    }
+  final Set<int> notes;
 
-    final selectedValue = currentBoard[selectedRow][selectedCol];
-    return selectedValue != null && currentBoard[row][col] == selectedValue;
-  }
-
-  Border _getCellBorder(int row, int col) {
-    final isLeftEdge = col % 3 == 0;
-    final isRightEdge = col == 8;
-    final isTopEdge = row % 3 == 0;
-    final isBottomEdge = row == 8;
-
-    return Border(
-      left: isLeftEdge
-          ? const BorderSide(color: AppColors.gridLineThick, width: 2)
-          : const BorderSide(color: AppColors.gridLine, width: 0.5),
-      right: isRightEdge
-          ? const BorderSide(color: AppColors.gridLineThick, width: 2)
-          : const BorderSide(color: AppColors.gridLine, width: 0.5),
-      top: isTopEdge
-          ? const BorderSide(color: AppColors.gridLineThick, width: 2)
-          : const BorderSide(color: AppColors.gridLine, width: 0.5),
-      bottom: isBottomEdge
-          ? const BorderSide(color: AppColors.gridLineThick, width: 2)
-          : const BorderSide(color: AppColors.gridLine, width: 0.5),
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(4),
+      child: GridView.builder(
+        physics: const NeverScrollableScrollPhysics(),
+        padding: EdgeInsets.zero,
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 3,
+        ),
+        itemCount: 9,
+        itemBuilder: (context, index) {
+          final number = index + 1;
+          return Center(
+            child: Text(
+              notes.contains(number) ? '$number' : '',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.noteColor,
+                    fontSize: 9.5,
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+          );
+        },
+      ),
     );
   }
+}
+
+class _GridOverlay extends StatelessWidget {
+  const _GridOverlay({required this.cellSize});
+
+  final double cellSize;
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      size: Size(cellSize * 9, cellSize * 9),
+      painter: _SudokuGridPainter(),
+    );
+  }
+}
+
+class _SudokuGridPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final thinPaint = Paint()
+      ..color = AppColors.gridLine.withOpacity(0.82)
+      ..strokeWidth = 0.5;
+    final thickPaint = Paint()
+      ..color = AppColors.gridLineThick
+      ..strokeWidth = 1.4;
+
+    final cellSize = size.width / 9;
+    for (var index = 0; index <= 9; index++) {
+      final offset = cellSize * index;
+      final paint = index % 3 == 0 ? thickPaint : thinPaint;
+      canvas.drawLine(Offset(offset, 0), Offset(offset, size.height), paint);
+      canvas.drawLine(Offset(0, offset), Offset(size.width, offset), paint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
