@@ -318,8 +318,9 @@ class _NotesGrid extends StatelessWidget {
               notes.contains(number) ? '$number' : '',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: c.noteColor,
-                    fontSize: 9.5,
+                    fontSize: 10,
                     fontWeight: FontWeight.w700,
+                    letterSpacing: 0,
                   ),
             ),
           );
