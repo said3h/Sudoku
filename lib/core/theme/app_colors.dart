@@ -95,7 +95,7 @@ class AppColorScheme {
     textMuted: Color(0xFF79839A),
     boardBackground: Color(0xFF0F1523),
     cellBackground: Color(0xFF131A2A),
-    cellSelected: Color(0xFF1D2B48),
+    cellSelected: Color(0xFF1E3566),
     cellHighlighted: Color(0xFF182134),
     cellPeer: Color(0xFF141D2D),
     cellMatched: Color(0x1823A6FF),

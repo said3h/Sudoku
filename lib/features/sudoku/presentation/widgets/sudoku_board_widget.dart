@@ -169,11 +169,22 @@ class _BoardCell extends StatelessWidget {
             decoration: BoxDecoration(
               color: background,
               border: Border.all(
-                color: hasConflict
-                    ? c.cellConflict.withOpacity(0.45)
-                    : c.gridLine.withOpacity(0.68),
-                width: 0.35,
+                color: isSelected
+                    ? c.accentBlue.withOpacity(0.7)
+                    : hasConflict
+                        ? c.cellConflict.withOpacity(0.45)
+                        : c.gridLine.withOpacity(0.68),
+                width: isSelected ? 1.0 : 0.35,
               ),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: c.accentBlue.withOpacity(0.15),
+                        blurRadius: 6,
+                        spreadRadius: 0.5,
+                      ),
+                    ]
+                  : null,
             ),
             child: Center(
               child: value != null
