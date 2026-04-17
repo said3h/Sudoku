@@ -170,18 +170,18 @@ class _BoardCell extends StatelessWidget {
               color: background,
               border: Border.all(
                 color: isSelected
-                    ? c.accentBlue.withOpacity(0.7)
+                    ? c.accentBlue.withOpacity(0.9)
                     : hasConflict
-                        ? c.cellConflict.withOpacity(0.45)
+                        ? c.cellConflict.withOpacity(0.5)
                         : c.gridLine.withOpacity(0.68),
-                width: isSelected ? 1.0 : 0.35,
+                width: isSelected ? 1.5 : 0.35,
               ),
               boxShadow: isSelected
                   ? [
                       BoxShadow(
-                        color: c.accentBlue.withOpacity(0.15),
-                        blurRadius: 6,
-                        spreadRadius: 0.5,
+                        color: c.accentBlue.withOpacity(0.3),
+                        blurRadius: 10,
+                        spreadRadius: 1,
                       ),
                     ]
                   : null,
