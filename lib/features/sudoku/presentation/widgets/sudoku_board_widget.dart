@@ -62,18 +62,7 @@ class SudokuBoardWidget extends StatelessWidget {
 
                     return Stack(
                       children: [
-                        // Selection indicator - OUTSIDE ClipRRect so it's never clipped
-                        if (selectedCell != null)
-                          Positioned(
-                            left: selectedCell!.$2 * cellSize,
-                            top: selectedCell!.$1 * cellSize,
-                            width: cellSize,
-                            height: cellSize,
-                            child: _SelectionIndicator(
-                              cellSize: cellSize,
-                            ),
-                          ),
-                        // Cells with ClipRRect
+                        // Cells with ClipRRect (painted FIRST, below)
                         ClipRRect(
                           borderRadius: BorderRadius.circular(16),
                           child: DecoratedBox(
@@ -113,6 +102,17 @@ class SudokuBoardWidget extends StatelessWidget {
                             ),
                           ),
                         ),
+                        // Selection indicator - OUTSIDE ClipRRect, painted LAST so it's on TOP
+                        if (selectedCell != null)
+                          Positioned(
+                            left: selectedCell!.$2 * cellSize,
+                            top: selectedCell!.$1 * cellSize,
+                            width: cellSize,
+                            height: cellSize,
+                            child: _SelectionIndicator(
+                              cellSize: cellSize,
+                            ),
+                          ),
                       ],
                     );
                   },
@@ -138,24 +138,22 @@ class _SelectionIndicator extends StatelessWidget {
       duration: const Duration(milliseconds: 160),
       curve: Curves.easeOutCubic,
       decoration: BoxDecoration(
-        color: Colors.transparent,
+        // TEMP: bright color to verify overlay is visible
+        color: Colors.orange.withOpacity(0.3),
         border: Border.all(
-          color: c.accentBlue.withOpacity(0.9),
-          width: 1.5,
+          // TEMP: bright red border to verify
+          color: Colors.red,
+          width: 3.0,
         ),
         borderRadius: BorderRadius.circular(2),
-      ),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(2),
-          boxShadow: [
-            BoxShadow(
-              color: c.accentBlue.withOpacity(0.25),
-              blurRadius: 8,
-              spreadRadius: 0,
-            ),
-          ],
-        ),
+        boxShadow: [
+          BoxShadow(
+            // TEMP: bright green glow
+            color: Colors.green.withOpacity(0.5),
+            blurRadius: 20,
+            spreadRadius: 5,
+          ),
+        ],
       ),
     );
   }
