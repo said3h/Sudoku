@@ -21,6 +21,8 @@ class StatsScreen extends StatelessWidget {
           final completionRate = stats.gamesStarted == 0
               ? 0
               : ((stats.gamesCompleted / stats.gamesStarted) * 100).round();
+          final todayKey = DateTime.now().toIso8601String().split('T').first;
+          final isDailyCompleted = stats.lastCompletedDayKey == todayKey;
 
           return ListView(
             padding: const EdgeInsets.all(20),
@@ -50,6 +52,7 @@ class StatsScreen extends StatelessWidget {
                         Expanded(
                           child: _HeroStat(
                             label: 'Racha',
+                            sublabel: 'días seguidos',
                             value: '${stats.currentStreak}',
                             accent: c.accent,
                           ),
@@ -65,13 +68,17 @@ class StatsScreen extends StatelessWidget {
                         const SizedBox(width: 12),
                         Expanded(
                           child: _HeroStat(
-                            label: 'Daily',
+                            label: 'Completados',
                             value: '${stats.dailyChallengesCompleted}',
                             accent: c.success,
                           ),
                         ),
                       ],
                     ),
+                    if (!isDailyCompleted) ...[
+                      const SizedBox(height: 16),
+                      _StreakReminder(),
+                    ],
                   ],
                 ),
               ),
@@ -135,11 +142,13 @@ class _HeroStat extends StatelessWidget {
     required this.label,
     required this.value,
     required this.accent,
+    this.sublabel,
   });
 
   final String label;
   final String value;
   final Color accent;
+  final String? sublabel;
 
   @override
   Widget build(BuildContext context) {
@@ -160,8 +169,59 @@ class _HeroStat extends StatelessWidget {
                 .headlineMedium
                 ?.copyWith(color: accent),
           ),
-          const SizedBox(height: 4),
-          Text(label, style: Theme.of(context).textTheme.bodySmall),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: c.textSecondary,
+                ),
+          ),
+          if (sublabel != null) ...[
+            const SizedBox(height: 1),
+            Text(
+              sublabel!,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: c.textMuted,
+                    fontSize: 9,
+                  ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _StreakReminder extends StatelessWidget {
+  const _StreakReminder();
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.appColors.colors;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: c.accent.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: c.accent.withOpacity(0.2)),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.local_fire_department_rounded,
+            color: c.accent,
+            size: 18,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'Completa el reto de hoy',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: c.accent,
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+          ),
         ],
       ),
     );
