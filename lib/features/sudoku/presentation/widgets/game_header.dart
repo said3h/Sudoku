@@ -20,7 +20,7 @@ class GameHeader extends StatelessWidget {
     final c = context.appColors.colors;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(18, 12, 18, 8),
+      padding: const EdgeInsets.fromLTRB(18, 8, 18, 6),
       child: Column(
         children: [
           Row(

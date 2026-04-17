@@ -240,8 +240,8 @@ class _BoardCell extends StatelessWidget {
                         style: TextStyle(
                           fontSize: size * 0.44,
                           fontWeight:
-                              isGiven ? FontWeight.w800 : FontWeight.w700,
-                          letterSpacing: -0.4,
+                              isGiven ? FontWeight.w700 : FontWeight.w500,
+                          letterSpacing: -0.5,
                           color: hasConflict
                               ? c.cellConflict
                               : isGiven
@@ -303,7 +303,7 @@ class _NotesGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.appColors.colors;
     return Padding(
-      padding: const EdgeInsets.all(4),
+      padding: const EdgeInsets.all(3),
       child: GridView.builder(
         physics: const NeverScrollableScrollPhysics(),
         padding: EdgeInsets.zero,
@@ -319,7 +319,7 @@ class _NotesGrid extends StatelessWidget {
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: c.noteColor,
                     fontSize: 10,
-                    fontWeight: FontWeight.w700,
+                    fontWeight: FontWeight.w600,
                     letterSpacing: 0,
                   ),
             ),

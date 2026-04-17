@@ -74,7 +74,7 @@ class GameScreen extends ConsumerWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   NumberPad(
                     isNoteMode: gameState.isNoteMode,
                     onNumberTap: (number) async {
@@ -101,7 +101,7 @@ class GameScreen extends ConsumerWidget {
                       await feedback.tap();
                     },
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 12),
                 ],
               ),
             ),
