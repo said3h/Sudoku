@@ -138,20 +138,17 @@ class _SelectionIndicator extends StatelessWidget {
       duration: const Duration(milliseconds: 160),
       curve: Curves.easeOutCubic,
       decoration: BoxDecoration(
-        // TEMP: bright color to verify overlay is visible
-        color: Colors.orange.withOpacity(0.3),
+        color: c.cellSelected.withOpacity(0.85),
         border: Border.all(
-          // TEMP: bright red border to verify
-          color: Colors.red,
-          width: 3.0,
+          color: c.accentBlue.withOpacity(0.9),
+          width: 1.5,
         ),
         borderRadius: BorderRadius.circular(2),
         boxShadow: [
           BoxShadow(
-            // TEMP: bright green glow
-            color: Colors.green.withOpacity(0.5),
-            blurRadius: 20,
-            spreadRadius: 5,
+            color: c.accentBlue.withOpacity(0.25),
+            blurRadius: 10,
+            spreadRadius: 0,
           ),
         ],
       ),
