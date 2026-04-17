@@ -182,7 +182,7 @@ class _SettingsTile extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
       decoration: BoxDecoration(
         color: c.surface,
         borderRadius: BorderRadius.circular(18),
@@ -193,8 +193,21 @@ class _SettingsTile extends StatelessWidget {
         value: value,
         onChanged: onChanged,
         activeColor: c.accent,
-        title: Text(title),
-        subtitle: Text(subtitle),
+        title: Text(
+          title,
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                color: c.textPrimary,
+              ),
+        ),
+        subtitle: Padding(
+          padding: const EdgeInsets.only(top: 2),
+          child: Text(
+            subtitle,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: c.textMuted,
+                ),
+          ),
+        ),
       ),
     );
   }

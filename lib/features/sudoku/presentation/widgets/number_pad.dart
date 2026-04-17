@@ -57,7 +57,7 @@ class NumberPad extends StatelessWidget {
             children: [
               Expanded(
                 child: _ActionButton(
-                  icon: Icons.backspace_outlined,
+                  icon: Icons.backspace_rounded,
                   label: 'Borrar',
                   onTap: onClear,
                 ),
@@ -114,7 +114,7 @@ class _NumberButton extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(16),
         child: Ink(
-          height: 54,
+          height: 56,
           decoration: BoxDecoration(
             color: c.surfaceLight,
             borderRadius: BorderRadius.circular(16),
@@ -124,7 +124,7 @@ class _NumberButton extends StatelessWidget {
             child: Text(
               '$number',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: c.accentBlueLight,
+                    color: c.accentBlue,
                     fontWeight: FontWeight.w800,
                   ),
             ),
@@ -159,7 +159,7 @@ class _ActionButton extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(18),
         child: Ink(
-          height: 64,
+          height: 60,
           decoration: BoxDecoration(
             color: isActive ? c.accentSoft : c.surface,
             borderRadius: BorderRadius.circular(18),
@@ -170,12 +170,13 @@ class _ActionButton extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 19, color: color),
-              const SizedBox(height: 4),
+              Icon(icon, size: 20, color: color),
+              const SizedBox(height: 3),
               Text(
                 label,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: color,
+                      fontSize: 10,
                     ),
               ),
             ],

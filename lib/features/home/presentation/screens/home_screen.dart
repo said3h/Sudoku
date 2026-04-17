@@ -120,7 +120,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         );
                       },
                     ).animate().fadeIn(delay: 100.ms).slideY(begin: 0.06),
-                  if (shouldShowResume) const SizedBox(height: 18),
+                  if (shouldShowResume)
+                    const SizedBox(height: 20),
                   _MotivationalMessage(
                     currentStreak: stats.currentStreak,
                     isDailyCompleted: isDailyCompleted,
@@ -431,9 +432,21 @@ class _CountdownTimer extends StatelessWidget {
         ),
         const SizedBox(width: 10),
         _Digit(value: hours),
-        Text(':', style: TextStyle(color: c.textMuted)),
+        Text(
+          ':',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: c.textMuted,
+                fontWeight: FontWeight.w600,
+              ),
+        ),
         _Digit(value: minutes),
-        Text(':', style: TextStyle(color: c.textMuted)),
+        Text(
+          ':',
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: c.textMuted,
+                fontWeight: FontWeight.w600,
+              ),
+        ),
         _Digit(value: seconds),
       ],
     );
@@ -501,8 +514,8 @@ class _WeeklyProgress extends StatelessWidget {
               ),
               const SizedBox(height: 6),
               Container(
-                width: 10,
-                height: 10,
+                width: 12,
+                height: 12,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: isCompleted
@@ -769,7 +782,7 @@ class _QuickStatCard extends StatelessWidget {
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: c.textMuted,
-                  fontSize: 9,
+                  fontSize: 10,
                 ),
           ),
         ],
