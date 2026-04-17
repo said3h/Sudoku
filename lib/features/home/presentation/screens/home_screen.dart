@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -130,10 +131,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   const SizedBox(height: 18),
                   _QuickStatsRow(stats: stats),
                   const SizedBox(height: 26),
-                  _NewGameSection(
-                    zenEnabled: settings.zenModeEnabled,
-                    onStartNew: () =>
-                        _startNewGame(context, settings.zenModeEnabled),
+                  _NewGameButton(
+                    onTap: () => _startNewGame(context, settings.zenModeEnabled),
                   ),
                   const SizedBox(height: 18),
                   _SecondaryActions(),
@@ -162,9 +161,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
 
     if (result == null || !context.mounted) return;
+    final newSeed = Random().nextInt(2147483647);
     context.push(
       '${AppConstants.routeGame}?clues=${result.difficulty.cluesCount}'
-      '&zen=$zenModeEnabled&resume=false',
+      '&zen=$zenModeEnabled&resume=false&seed=$newSeed',
     );
   }
 }
@@ -585,13 +585,6 @@ class _ContinueCard extends StatelessWidget {
                     'Continuar partida',
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'Retoma donde lo dejaste',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: c.textMuted,
-                        ),
-                  ),
                 ],
               ),
             ),
@@ -791,14 +784,10 @@ class _QuickStatCard extends StatelessWidget {
   }
 }
 
-class _NewGameSection extends StatelessWidget {
-  const _NewGameSection({
-    required this.zenEnabled,
-    required this.onStartNew,
-  });
+class _NewGameButton extends StatelessWidget {
+  const _NewGameButton({required this.onTap});
 
-  final bool zenEnabled;
-  final VoidCallback onStartNew;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -814,73 +803,15 @@ class _NewGameSection extends StatelessWidget {
               ),
         ),
         const SizedBox(height: 10),
-        Row(
-          children: [
-            _DifficultyChip(
-              difficulty: Difficulty.easy,
-              onTap: onStartNew,
-            ),
-            const SizedBox(width: 8),
-            _DifficultyChip(
-              difficulty: Difficulty.medium,
-              onTap: onStartNew,
-            ),
-            const SizedBox(width: 8),
-            _DifficultyChip(
-              difficulty: Difficulty.hard,
-              onTap: onStartNew,
-            ),
-            const SizedBox(width: 8),
-            _DifficultyChip(
-              difficulty: Difficulty.expert,
-              onTap: onStartNew,
-            ),
-          ],
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: onTap,
+            icon: const Icon(Icons.add_rounded, size: 20),
+            label: const Text('Nueva partida'),
+          ),
         ),
       ],
-    );
-  }
-}
-
-class _DifficultyChip extends StatelessWidget {
-  const _DifficultyChip({
-    required this.difficulty,
-    required this.onTap,
-  });
-
-  final Difficulty difficulty;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          decoration: BoxDecoration(
-            color: difficulty.color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: difficulty.color.withOpacity(0.2),
-            ),
-          ),
-          child: Column(
-            children: [
-              Icon(difficulty.icon, color: difficulty.color, size: 18),
-              const SizedBox(height: 4),
-              Text(
-                difficulty.displayName,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: difficulty.color,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 10,
-                    ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

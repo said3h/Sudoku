@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/providers/app_settings_provider.dart';
@@ -318,9 +320,12 @@ class SudokuGameNotifier extends StateNotifier<SudokuGameState> {
 
   void resetGame() {
     _history.clear();
+    final isDaily = config.gameMode == GameMode.daily;
+    final newSeed = isDaily ? config.seed : Random().nextInt(2147483647);
     state = _createNewGame(
       config.copyWith(
         isZenMode: settingsRef.read(appSettingsProvider).zenModeEnabled,
+        seed: newSeed,
       ),
     );
     SudokuGameStorage.recordGameStarted();
