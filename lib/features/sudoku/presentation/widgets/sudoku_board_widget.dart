@@ -60,49 +60,101 @@ class SudokuBoardWidget extends StatelessWidget {
                   builder: (context, constraints) {
                     final cellSize = constraints.maxWidth / 9;
 
-                    return ClipRRect(
-                      borderRadius: BorderRadius.circular(16),
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: c.boardBackground,
-                        ),
-                        child: Stack(
-                          children: [
-                            Column(
-                              children: List.generate(9, (row) {
-                                return Expanded(
-                                  child: Row(
-                                    children: List.generate(9, (col) {
-                                      return Expanded(
-                                        child: _BoardCell(
-                                          row: row,
-                                          col: col,
-                                          size: cellSize,
-                                          currentBoard: currentBoard,
-                                          givenCells: givenCells,
-                                          selectedCell: selectedCell,
-                                          solution: solution,
-                                          notes: notes,
-                                          isZenMode: isZenMode,
-                                          onTap: () => onCellTap(row, col),
-                                        ),
-                                      );
-                                    }),
-                                  ),
-                                );
-                              }),
+                    return Stack(
+                      children: [
+                        // Selection indicator - OUTSIDE ClipRRect so it's never clipped
+                        if (selectedCell != null)
+                          Positioned(
+                            left: selectedCell!.$2 * cellSize,
+                            top: selectedCell!.$1 * cellSize,
+                            width: cellSize,
+                            height: cellSize,
+                            child: _SelectionIndicator(
+                              cellSize: cellSize,
                             ),
-                            IgnorePointer(
-                                child: _GridOverlay(cellSize: cellSize)),
-                          ],
+                          ),
+                        // Cells with ClipRRect
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(16),
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: c.boardBackground,
+                            ),
+                            child: Stack(
+                              children: [
+                                Column(
+                                  children: List.generate(9, (row) {
+                                    return Expanded(
+                                      child: Row(
+                                        children: List.generate(9, (col) {
+                                          return Expanded(
+                                            child: _BoardCell(
+                                              row: row,
+                                              col: col,
+                                              size: cellSize,
+                                              currentBoard: currentBoard,
+                                              givenCells: givenCells,
+                                              selectedCell: selectedCell,
+                                              solution: solution,
+                                              notes: notes,
+                                              isZenMode: isZenMode,
+                                              onTap: () => onCellTap(row, col),
+                                            ),
+                                          );
+                                        }),
+                                      ),
+                                    );
+                                  }),
+                                ),
+                                IgnorePointer(
+                                  child: _GridOverlay(cellSize: cellSize),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     );
                   },
                 ),
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SelectionIndicator extends StatelessWidget {
+  const _SelectionIndicator({required this.cellSize});
+
+  final double cellSize;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.appColors.colors;
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 160),
+      curve: Curves.easeOutCubic,
+      decoration: BoxDecoration(
+        color: Colors.transparent,
+        border: Border.all(
+          color: c.accentBlue.withOpacity(0.9),
+          width: 1.5,
+        ),
+        borderRadius: BorderRadius.circular(2),
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(2),
+          boxShadow: [
+            BoxShadow(
+              color: c.accentBlue.withOpacity(0.25),
+              blurRadius: 8,
+              spreadRadius: 0,
+            ),
+          ],
         ),
       ),
     );
@@ -169,22 +221,11 @@ class _BoardCell extends StatelessWidget {
             decoration: BoxDecoration(
               color: background,
               border: Border.all(
-                color: isSelected
-                    ? c.accentBlue.withOpacity(0.9)
-                    : hasConflict
-                        ? c.cellConflict.withOpacity(0.5)
-                        : c.gridLine.withOpacity(0.68),
-                width: isSelected ? 1.2 : 0.35,
+                color: hasConflict
+                    ? c.cellConflict.withOpacity(0.5)
+                    : c.gridLine.withOpacity(0.68),
+                width: 0.35,
               ),
-              boxShadow: isSelected
-                  ? [
-                      BoxShadow(
-                        color: c.accentBlue.withOpacity(0.22),
-                        blurRadius: 7,
-                        spreadRadius: 0,
-                      ),
-                    ]
-                  : null,
             ),
             child: Center(
               child: value != null
