@@ -53,7 +53,7 @@ class SudokuBoardWidget extends StatelessWidget {
               ],
             ),
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(18),
               child: AspectRatio(
                 aspectRatio: 1,
                 child: LayoutBuilder(
@@ -61,7 +61,7 @@ class SudokuBoardWidget extends StatelessWidget {
                     final cellSize = constraints.maxWidth / 9;
 
                     return ClipRRect(
-                      borderRadius: BorderRadius.circular(18),
+                      borderRadius: BorderRadius.circular(16),
                       child: DecoratedBox(
                         decoration: BoxDecoration(
                           color: c.boardBackground,
@@ -317,7 +317,7 @@ class _SudokuGridPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    const inset = 2.5;
+    const inset = 3.0;
     final thinPaint = Paint()
       ..color = gridLine.withOpacity(0.82)
       ..strokeWidth = 0.5;
