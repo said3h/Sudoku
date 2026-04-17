@@ -124,7 +124,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   _MotivationalMessage(
                     currentStreak: stats.currentStreak,
                     isDailyCompleted: isDailyCompleted,
-                    hasSavedGame: hasSavedGame,
                   ),
                   const SizedBox(height: 18),
                   _WeeklyProgress(stats: stats),
@@ -626,12 +625,10 @@ class _MotivationalMessage extends StatelessWidget {
   const _MotivationalMessage({
     required this.currentStreak,
     required this.isDailyCompleted,
-    required this.hasSavedGame,
   });
 
   final int currentStreak;
   final bool isDailyCompleted;
-  final bool hasSavedGame;
 
   @override
   Widget build(BuildContext context) {
@@ -666,7 +663,6 @@ class _MotivationalMessage extends StatelessWidget {
 
   IconData _getIcon() {
     if (isDailyCompleted) return Icons.celebration_outlined;
-    if (hasSavedGame) return Icons.play_arrow_rounded;
     if (currentStreak > 0) return Icons.local_fire_department_outlined;
     return Icons.trending_up_rounded;
   }
@@ -674,7 +670,6 @@ class _MotivationalMessage extends StatelessWidget {
   Color _getColor(BuildContext context) {
     final c = context.appColors.colors;
     if (isDailyCompleted) return c.success;
-    if (hasSavedGame) return c.accentBlue;
     if (currentStreak > 0) return c.accent;
     return c.textSecondary;
   }
@@ -684,7 +679,6 @@ class _MotivationalMessage extends StatelessWidget {
       return 'Racha de $currentStreak dias';
     }
     if (isDailyCompleted) return 'Reto completado';
-    if (hasSavedGame) return 'Continua tu partida';
     if (currentStreak > 0) return 'Mantén tu racha de $currentStreak dias';
     return 'Completa el reto diario para empezar tu racha';
   }
