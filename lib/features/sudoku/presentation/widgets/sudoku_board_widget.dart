@@ -53,7 +53,7 @@ class SudokuBoardWidget extends StatelessWidget {
               ],
             ),
             child: Padding(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(22),
               child: AspectRatio(
                 aspectRatio: 1,
                 child: LayoutBuilder(
@@ -61,7 +61,7 @@ class SudokuBoardWidget extends StatelessWidget {
                     final cellSize = constraints.maxWidth / 9;
 
                     return ClipRRect(
-                      borderRadius: BorderRadius.circular(18),
+                      borderRadius: BorderRadius.circular(16),
                       child: DecoratedBox(
                         decoration: BoxDecoration(
                           color: c.boardBackground,
@@ -174,14 +174,14 @@ class _BoardCell extends StatelessWidget {
                     : hasConflict
                         ? c.cellConflict.withOpacity(0.5)
                         : c.gridLine.withOpacity(0.68),
-                width: isSelected ? 1.5 : 0.35,
+                width: isSelected ? 1.2 : 0.35,
               ),
               boxShadow: isSelected
                   ? [
                       BoxShadow(
-                        color: c.accentBlue.withOpacity(0.3),
-                        blurRadius: 10,
-                        spreadRadius: 1,
+                        color: c.accentBlue.withOpacity(0.22),
+                        blurRadius: 7,
+                        spreadRadius: 0,
                       ),
                     ]
                   : null,
