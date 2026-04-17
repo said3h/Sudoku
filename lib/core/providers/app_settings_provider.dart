@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../settings/app_settings.dart';
@@ -18,6 +19,11 @@ class AppSettingsNotifier extends StateNotifier<AppSettings> {
 
   Future<void> setZenMode(bool value) async {
     state = state.copyWith(zenModeEnabled: value);
+    await AppSettingsStorage.save(state);
+  }
+
+  Future<void> setThemeMode(ThemeMode value) async {
+    state = state.copyWith(themeMode: value);
     await AppSettingsStorage.save(state);
   }
 }

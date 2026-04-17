@@ -10,8 +10,9 @@ class StatsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors.colors;
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: c.background,
       appBar: AppBar(title: const Text('Estadisticas')),
       body: ValueListenableBuilder(
         valueListenable: SudokuGameStorage.statsListenable(),
@@ -27,9 +28,9 @@ class StatsScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(22),
                 decoration: BoxDecoration(
-                  gradient: AppColors.heroGradient,
+                  gradient: c.heroGradient,
                   borderRadius: BorderRadius.circular(28),
-                  border: Border.all(color: AppColors.surfaceBorder),
+                  border: Border.all(color: c.surfaceBorder),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -50,7 +51,7 @@ class StatsScreen extends StatelessWidget {
                           child: _HeroStat(
                             label: 'Racha',
                             value: '${stats.currentStreak}',
-                            accent: AppColors.accent,
+                            accent: c.accent,
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -58,7 +59,7 @@ class StatsScreen extends StatelessWidget {
                           child: _HeroStat(
                             label: 'Mejor racha',
                             value: '${stats.bestStreak}',
-                            accent: AppColors.accentBlue,
+                            accent: c.accentBlue,
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -66,7 +67,7 @@ class StatsScreen extends StatelessWidget {
                           child: _HeroStat(
                             label: 'Daily',
                             value: '${stats.dailyChallengesCompleted}',
-                            accent: AppColors.success,
+                            accent: c.success,
                           ),
                         ),
                       ],
@@ -87,25 +88,25 @@ class StatsScreen extends StatelessWidget {
                     label: 'Iniciadas',
                     value: '${stats.gamesStarted}',
                     icon: Icons.play_circle_outline_rounded,
-                    accent: AppColors.accentBlue,
+                    accent: c.accentBlue,
                   ),
                   _MetricCard(
                     label: 'Completadas',
                     value: '${stats.gamesCompleted}',
                     icon: Icons.emoji_events_outlined,
-                    accent: AppColors.accent,
+                    accent: c.accent,
                   ),
                   _MetricCard(
                     label: 'Errores',
                     value: '${stats.totalMistakes}',
                     icon: Icons.auto_fix_normal_outlined,
-                    accent: AppColors.error,
+                    accent: c.error,
                   ),
                   _MetricCard(
                     label: 'Exito',
                     value: '$completionRate%',
                     icon: Icons.trending_up_rounded,
-                    accent: AppColors.success,
+                    accent: c.success,
                   ),
                 ],
               ),
@@ -142,18 +143,22 @@ class _HeroStat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors.colors;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.04),
+        color: c.surfaceLight.withOpacity(0.5),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.06)),
+        border: Border.all(color: c.surfaceBorder.withOpacity(0.6)),
       ),
       child: Column(
         children: [
           Text(
             value,
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(color: accent),
+            style: Theme.of(context)
+                .textTheme
+                .headlineMedium
+                ?.copyWith(color: accent),
           ),
           const SizedBox(height: 4),
           Text(label, style: Theme.of(context).textTheme.bodySmall),
@@ -178,12 +183,13 @@ class _MetricCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors.colors;
     return Container(
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: c.surface,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: AppColors.surfaceBorder),
+        border: Border.all(color: c.surfaceBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -218,6 +224,7 @@ class _BestTimeTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors.colors;
     final bestTimeMs = stats.bestTimesMs[difficulty.name];
     final bestTime = bestTimeMs == null
         ? '--:--'
@@ -227,9 +234,9 @@ class _BestTimeTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: c.surface,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.surfaceBorder),
+        border: Border.all(color: c.surfaceBorder),
       ),
       child: Row(
         children: [
@@ -252,7 +259,7 @@ class _BestTimeTile extends StatelessWidget {
           Text(
             bestTime,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: AppColors.accentBlueLight,
+                  color: c.accentBlueLight,
                 ),
           ),
         ],

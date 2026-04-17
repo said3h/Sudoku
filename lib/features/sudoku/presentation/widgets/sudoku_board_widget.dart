@@ -25,6 +25,7 @@ class SudokuBoardWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors.colors;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 18),
       child: Center(
@@ -34,14 +35,14 @@ class SudokuBoardWidget extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  AppColors.surface.withOpacity(0.94),
-                  AppColors.boardBackground,
+                  c.surface.withOpacity(0.94),
+                  c.boardBackground,
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(28),
-              border: Border.all(color: AppColors.surfaceBorder),
+              border: Border.all(color: c.surfaceBorder),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.24),
@@ -62,8 +63,8 @@ class SudokuBoardWidget extends StatelessWidget {
                     return ClipRRect(
                       borderRadius: BorderRadius.circular(20),
                       child: DecoratedBox(
-                        decoration: const BoxDecoration(
-                          color: AppColors.boardBackground,
+                        decoration: BoxDecoration(
+                          color: c.boardBackground,
                         ),
                         child: Stack(
                           children: [
@@ -91,7 +92,8 @@ class SudokuBoardWidget extends StatelessWidget {
                                 );
                               }),
                             ),
-                            IgnorePointer(child: _GridOverlay(cellSize: cellSize)),
+                            IgnorePointer(
+                                child: _GridOverlay(cellSize: cellSize)),
                           ],
                         ),
                       ),
@@ -134,19 +136,21 @@ class _BoardCell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors.colors;
     final value = currentBoard[row][col];
     final isGiven = givenCells.contains((row, col));
     final isSelected = selectedCell == (row, col);
     final isPeer = _isPeer();
     final isMatched = _isMatchedValue();
-    final hasConflict = !isGiven && !isZenMode && value != null && _hasConflict(value);
+    final hasConflict =
+        !isGiven && !isZenMode && value != null && _hasConflict(value);
     final cellNotes = notes[(row, col)];
 
-    var background = AppColors.cellBackground;
-    if (isPeer) background = AppColors.cellPeer;
-    if (isMatched) background = AppColors.cellMatched;
-    if (isSelected) background = AppColors.cellSelected;
-    if (hasConflict) background = AppColors.cellConflictSoft;
+    var background = c.cellBackground;
+    if (isPeer) background = c.cellPeer;
+    if (isMatched) background = c.cellMatched;
+    if (isSelected) background = c.cellSelected;
+    if (hasConflict) background = c.cellConflictSoft;
 
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0.96, end: isSelected ? 1 : 0.985),
@@ -166,8 +170,8 @@ class _BoardCell extends StatelessWidget {
               color: background,
               border: Border.all(
                 color: hasConflict
-                    ? AppColors.cellConflict.withOpacity(0.45)
-                    : AppColors.gridLine.withOpacity(0.68),
+                    ? c.cellConflict.withOpacity(0.45)
+                    : c.gridLine.withOpacity(0.68),
                 width: 0.35,
               ),
             ),
@@ -177,8 +181,10 @@ class _BoardCell extends StatelessWidget {
                       duration: const Duration(milliseconds: 160),
                       transitionBuilder: (child, animation) {
                         return ScaleTransition(
-                          scale: Tween<double>(begin: 0.82, end: 1).animate(animation),
-                          child: FadeTransition(opacity: animation, child: child),
+                          scale: Tween<double>(begin: 0.82, end: 1)
+                              .animate(animation),
+                          child:
+                              FadeTransition(opacity: animation, child: child),
                         );
                       },
                       child: Text(
@@ -186,13 +192,14 @@ class _BoardCell extends StatelessWidget {
                         key: ValueKey('cell-$row-$col-$value'),
                         style: TextStyle(
                           fontSize: size * 0.44,
-                          fontWeight: isGiven ? FontWeight.w800 : FontWeight.w700,
+                          fontWeight:
+                              isGiven ? FontWeight.w800 : FontWeight.w700,
                           letterSpacing: -0.4,
                           color: hasConflict
-                              ? AppColors.cellConflict
+                              ? c.cellConflict
                               : isGiven
-                                  ? AppColors.givenNumber
-                                  : AppColors.userNumber,
+                                  ? c.givenNumber
+                                  : c.userNumber,
                         ),
                       ),
                     )
@@ -247,6 +254,7 @@ class _NotesGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors.colors;
     return Padding(
       padding: const EdgeInsets.all(4),
       child: GridView.builder(
@@ -262,7 +270,7 @@ class _NotesGrid extends StatelessWidget {
             child: Text(
               notes.contains(number) ? '$number' : '',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: AppColors.noteColor,
+                    color: c.noteColor,
                     fontSize: 9.5,
                     fontWeight: FontWeight.w700,
                   ),
@@ -281,21 +289,28 @@ class _GridOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors.colors;
     return CustomPaint(
       size: Size(cellSize * 9, cellSize * 9),
-      painter: _SudokuGridPainter(),
+      painter: _SudokuGridPainter(
+          gridLine: c.gridLine, gridLineThick: c.gridLineThick),
     );
   }
 }
 
 class _SudokuGridPainter extends CustomPainter {
+  _SudokuGridPainter({required this.gridLine, required this.gridLineThick});
+
+  final Color gridLine;
+  final Color gridLineThick;
+
   @override
   void paint(Canvas canvas, Size size) {
     final thinPaint = Paint()
-      ..color = AppColors.gridLine.withOpacity(0.82)
+      ..color = gridLine.withOpacity(0.82)
       ..strokeWidth = 0.5;
     final thickPaint = Paint()
-      ..color = AppColors.gridLineThick
+      ..color = gridLineThick
       ..strokeWidth = 1.4;
 
     final cellSize = size.width / 9;
@@ -308,5 +323,7 @@ class _SudokuGridPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _SudokuGridPainter oldDelegate) =>
+      oldDelegate.gridLine != gridLine ||
+      oldDelegate.gridLineThick != gridLineThick;
 }

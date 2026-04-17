@@ -5,6 +5,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 import 'core/constants/app_constants.dart';
 import 'core/navigation/app_router.dart';
+import 'core/providers/app_settings_provider.dart';
 import 'core/theme/app_theme.dart';
 import 'features/sudoku/data/sudoku_game_storage.dart';
 
@@ -15,15 +16,6 @@ Future<void> main() async {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: Color(0xFF08111F),
-      systemNavigationBarIconBrightness: Brightness.light,
-    ),
-  );
 
   await Hive.initFlutter();
   await Hive.openBox(AppConstants.hiveBoxSettings);
@@ -67,14 +59,44 @@ class _SudokuAppState extends ConsumerState<SudokuApp>
     }
   }
 
+  void _updateSystemUI(ThemeMode mode, Brightness brightness) {
+    SystemChrome.setSystemUIOverlayStyle(
+      SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness:
+            brightness == Brightness.dark ? Brightness.light : Brightness.dark,
+        systemNavigationBarColor: brightness == Brightness.dark
+            ? const Color(0xFF08111F)
+            : const Color(0xFFF5F7FA),
+        systemNavigationBarIconBrightness:
+            brightness == Brightness.dark ? Brightness.light : Brightness.dark,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final settings = ref.watch(appSettingsProvider);
+    final themeMode = settings.themeMode;
+
+    Brightness effectiveBrightness;
+    if (themeMode == ThemeMode.light) {
+      effectiveBrightness = Brightness.light;
+    } else if (themeMode == ThemeMode.dark) {
+      effectiveBrightness = Brightness.dark;
+    } else {
+      effectiveBrightness =
+          WidgetsBinding.instance.platformDispatcher.platformBrightness;
+    }
+
+    _updateSystemUI(themeMode, effectiveBrightness);
+
     return MaterialApp.router(
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.darkTheme,
+      theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.dark,
+      themeMode: themeMode,
       routerConfig: AppRouter.router,
     );
   }

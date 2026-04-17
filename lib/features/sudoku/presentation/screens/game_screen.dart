@@ -22,6 +22,8 @@ class GameScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final c = context.appColors.colors;
+
     ref.listen<SudokuGameState>(sudokuGameProvider(config),
         (previous, next) async {
       if (previous?.isComplete == true || !next.isComplete) return;
@@ -44,7 +46,7 @@ class GameScreen extends ConsumerWidget {
     final feedback = ref.read(feedbackServiceProvider);
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: c.background,
       body: SafeArea(
         child: Column(
           children: [
@@ -113,11 +115,12 @@ class GameScreen extends ConsumerWidget {
     BuildContext context,
     SudokuGameNotifier notifier,
   ) async {
+    final c = context.appColors.colors;
     await showDialog<void>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          backgroundColor: AppColors.surface,
+          backgroundColor: c.surface,
           title: const Text('Reiniciar partida'),
           content: const Text(
               'Se generara un tablero nuevo con la misma dificultad.'),
@@ -144,6 +147,7 @@ class GameScreen extends ConsumerWidget {
     WidgetRef ref,
     SudokuGameState state,
   ) async {
+    final c = context.appColors.colors;
     final stats = SudokuGameStorage.loadStats();
     final todayKey = DateTime.now().toIso8601String().split('T').first;
     final isDailyStreak =
@@ -162,14 +166,14 @@ class GameScreen extends ConsumerWidget {
             margin: const EdgeInsets.symmetric(horizontal: 28),
             padding: const EdgeInsets.all(28),
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: c.surface,
               borderRadius: BorderRadius.circular(28),
-              border: Border.all(color: AppColors.surfaceBorder),
+              border: Border.all(color: c.surfaceBorder),
               boxShadow: [
                 BoxShadow(
                   color: state.isDailyChallenge
-                      ? AppColors.success.withOpacity(0.15)
-                      : AppColors.accentBlue.withOpacity(0.15),
+                      ? c.success.withOpacity(0.15)
+                      : c.accentBlue.withOpacity(0.15),
                   blurRadius: 32,
                   spreadRadius: -8,
                 ),
@@ -193,7 +197,7 @@ class GameScreen extends ConsumerWidget {
                     _getVictorySubtitle(state, isDailyStreak),
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.textSecondary,
+                          color: c.textSecondary,
                         ),
                   ),
                   if (isNewRecord) ...[
@@ -307,6 +311,7 @@ class _VictoryIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors.colors;
     return Container(
       width: 72,
       height: 72,
@@ -315,19 +320,19 @@ class _VictoryIcon extends StatelessWidget {
         gradient: isDailyChallenge
             ? LinearGradient(
                 colors: [
-                  AppColors.success,
-                  AppColors.success.withOpacity(0.7),
+                  c.success,
+                  c.success.withOpacity(0.7),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               )
-            : AppColors.gradientPrimary,
+            : c.gradientPrimary,
       ),
       child: Icon(
         isDailyChallenge
             ? Icons.check_circle_rounded
             : Icons.emoji_events_rounded,
-        color: isDailyChallenge ? Colors.white : AppColors.primary,
+        color: isDailyChallenge ? Colors.white : c.primary,
         size: 32,
       ),
     ).animate().scale(
@@ -340,26 +345,27 @@ class _VictoryIcon extends StatelessWidget {
 class _NewRecordBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors.colors;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.accent.withOpacity(0.12),
+        color: c.accent.withOpacity(0.12),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.accent.withOpacity(0.25)),
+        border: Border.all(color: c.accent.withOpacity(0.25)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
+          Icon(
             Icons.auto_awesome,
-            color: AppColors.accent,
+            color: c.accent,
             size: 14,
           ),
           const SizedBox(width: 6),
           Text(
             'Nuevo record',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.accent,
+                  color: c.accent,
                   fontWeight: FontWeight.w600,
                 ),
           ),
@@ -380,10 +386,11 @@ class _VictoryMetric extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors.colors;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.surfaceLight,
+        color: c.surfaceLight,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -391,7 +398,7 @@ class _VictoryMetric extends StatelessWidget {
           Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.textMuted,
+                  color: c.textMuted,
                   fontSize: 11,
                 ),
           ),

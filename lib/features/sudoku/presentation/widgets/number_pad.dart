@@ -22,6 +22,8 @@ class NumberPad extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors.colors;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 18),
       child: Column(
@@ -29,9 +31,9 @@ class NumberPad extends StatelessWidget {
         children: [
           DecoratedBox(
             decoration: BoxDecoration(
-              color: AppColors.surface,
+              color: c.surface,
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: AppColors.surfaceBorder),
+              border: Border.all(color: c.surfaceBorder),
             ),
             child: Padding(
               padding: const EdgeInsets.all(10),
@@ -104,6 +106,8 @@ class _NumberButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors.colors;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -112,15 +116,15 @@ class _NumberButton extends StatelessWidget {
         child: Ink(
           height: 54,
           decoration: BoxDecoration(
-            color: AppColors.surfaceLight,
+            color: c.surfaceLight,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.surfaceBorder),
+            border: Border.all(color: c.surfaceBorder),
           ),
           child: Center(
             child: Text(
               '$number',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: AppColors.accentBlueLight,
+                    color: c.accentBlueLight,
                     fontWeight: FontWeight.w800,
                   ),
             ),
@@ -146,7 +150,9 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = isActive ? AppColors.accent : AppColors.textSecondary;
+    final c = context.appColors.colors;
+    final color = isActive ? c.accent : c.textSecondary;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -155,10 +161,10 @@ class _ActionButton extends StatelessWidget {
         child: Ink(
           height: 64,
           decoration: BoxDecoration(
-            color: isActive ? AppColors.accentSoft : AppColors.surface,
+            color: isActive ? c.accentSoft : c.surface,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: isActive ? AppColors.accent.withOpacity(0.35) : AppColors.surfaceBorder,
+              color: isActive ? c.accent.withOpacity(0.35) : c.surfaceBorder,
             ),
           ),
           child: Column(

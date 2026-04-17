@@ -35,8 +35,9 @@ class _NewGameDialogState extends State<NewGameDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors.colors;
     return Dialog(
-      backgroundColor: AppColors.surface,
+      backgroundColor: c.surface,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -48,12 +49,12 @@ class _NewGameDialogState extends State<NewGameDialog> {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppColors.accentSoft,
+                    color: c.accentSoft,
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.grid_view_rounded,
-                    color: AppColors.accent,
+                    color: c.accent,
                     size: 26,
                   ),
                 ),
@@ -78,9 +79,12 @@ class _NewGameDialogState extends State<NewGameDialog> {
                 difficulty: difficulty,
                 isSelected: isSelected,
                 onTap: () => setState(() => _selectedDifficulty = difficulty),
-              ).animate().fade(
+              )
+                  .animate()
+                  .fade(
                     delay: Duration(milliseconds: 40 * difficulty.index),
-                  ).slideX(
+                  )
+                  .slideX(
                     begin: 0.08,
                     duration: const Duration(milliseconds: 240),
                   );
@@ -127,14 +131,15 @@ class _DifficultyOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors.colors;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 220),
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: isSelected ? difficulty.color.withOpacity(0.14) : AppColors.surfaceLight,
+        color: isSelected ? difficulty.color.withOpacity(0.14) : c.surfaceLight,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isSelected ? difficulty.color : AppColors.surfaceBorder,
+          color: isSelected ? difficulty.color : c.surfaceBorder,
         ),
       ),
       child: InkWell(

@@ -17,6 +17,8 @@ class GameHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors.colors;
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(18, 12, 18, 8),
       child: Column(
@@ -32,22 +34,25 @@ class GameHeader extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Sudoku', style: Theme.of(context).textTheme.titleLarge),
+                    Text('Sudoku',
+                        style: Theme.of(context).textTheme.titleLarge),
                     const SizedBox(height: 2),
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
                       children: [
                         _MiniBadge(
-                          label: gameState.isDailyChallenge ? 'Reto diario' : 'Clasico',
+                          label: gameState.isDailyChallenge
+                              ? 'Reto diario'
+                              : 'Clasico',
                           color: gameState.isDailyChallenge
-                              ? AppColors.accentBlue
-                              : AppColors.accent,
+                              ? c.accentBlue
+                              : c.accent,
                         ),
                         if (gameState.isZenMode)
-                          const _MiniBadge(
+                          _MiniBadge(
                             label: 'Zen',
-                            color: AppColors.success,
+                            color: c.success,
                           ),
                       ],
                     ),
@@ -66,7 +71,7 @@ class GameHeader extends StatelessWidget {
               Expanded(
                 child: _InfoCard(
                   icon: Icons.timer_outlined,
-                  accent: AppColors.accentBlue,
+                  accent: c.accentBlue,
                   label: 'Tiempo',
                   valueBuilder: () => _formatDuration(gameState.elapsed),
                   live: true,
@@ -76,9 +81,10 @@ class GameHeader extends StatelessWidget {
               Expanded(
                 child: _InfoCard(
                   icon: Icons.auto_awesome_rounded,
-                  accent: AppColors.accent,
+                  accent: c.accent,
                   label: gameState.isZenMode ? 'Modo' : 'Errores',
-                  valueBuilder: () => gameState.isZenMode ? 'Zen' : '${gameState.mistakes}',
+                  valueBuilder: () =>
+                      gameState.isZenMode ? 'Zen' : '${gameState.mistakes}',
                 ),
               ),
             ],
@@ -106,6 +112,8 @@ class _CircleButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors.colors;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -115,11 +123,11 @@ class _CircleButton extends StatelessWidget {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: AppColors.surfaceLight,
+            color: c.surfaceLight,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: AppColors.surfaceBorder),
+            border: Border.all(color: c.surfaceBorder),
           ),
-          child: Icon(icon, size: 18, color: AppColors.textPrimary),
+          child: Icon(icon, size: 18, color: c.textPrimary),
         ),
       ),
     );
@@ -169,12 +177,14 @@ class _InfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors.colors;
+
     final content = Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.surfaceLight,
+        color: c.surfaceLight,
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.surfaceBorder),
+        border: Border.all(color: c.surfaceBorder),
       ),
       child: Row(
         children: [

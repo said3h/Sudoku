@@ -55,6 +55,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     final dailySeed = todayKey.hashCode;
     final stats = SudokuGameStorage.loadStats();
     final savedGame = SudokuGameStorage.loadSavedGame();
+    final c = context.appColors.colors;
 
     final isDailyCompleted = stats.lastCompletedDayKey == todayKey;
     final hasSavedGame = savedGame != null && !savedGame.isComplete;
@@ -65,8 +66,8 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         child: Stack(
           children: [
             Container(
-              decoration: const BoxDecoration(
-                gradient: AppColors.gradientBackground,
+              decoration: BoxDecoration(
+                gradient: c.gradientBackground,
               ),
             ),
             Positioned.fill(
@@ -74,9 +75,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      AppColors.accentBlue.withOpacity(0.08),
+                      c.accentBlue.withOpacity(0.08),
                       Colors.transparent,
-                      AppColors.accent.withOpacity(0.05),
+                      c.accent.withOpacity(0.05),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
@@ -176,19 +177,20 @@ class _AppHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors.colors;
     return Row(
       children: [
         Container(
           width: 52,
           height: 52,
           decoration: BoxDecoration(
-            color: AppColors.surface,
+            color: c.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.surfaceBorder),
+            border: Border.all(color: c.surfaceBorder),
           ),
-          child: const Icon(
+          child: Icon(
             Icons.grid_view_rounded,
-            color: AppColors.textPrimary,
+            color: c.textPrimary,
             size: 26,
           ),
         ),
@@ -207,7 +209,7 @@ class _AppHeader extends StatelessWidget {
               Text(
                 'Premium Edition',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: AppColors.textMuted,
+                      color: c.textMuted,
                     ),
               ),
             ],
@@ -228,26 +230,27 @@ class _LevelBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors.colors;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: AppColors.surfaceLight,
+        color: c.surfaceLight,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.surfaceBorder),
+        border: Border.all(color: c.surfaceBorder),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
             Icons.star_rounded,
-            color: AppColors.accentLight,
+            color: c.accentLight,
             size: 14,
           ),
           const SizedBox(width: 4),
           Text(
             '$level',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.textSecondary,
+                  color: c.textSecondary,
                   fontWeight: FontWeight.w700,
                 ),
           ),
@@ -264,18 +267,19 @@ class _StreakBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors.colors;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            AppColors.accent.withOpacity(0.2),
-            AppColors.accent.withOpacity(0.1),
+            c.accent.withOpacity(0.2),
+            c.accent.withOpacity(0.1),
           ],
         ),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppColors.accent.withOpacity(0.3),
+          color: c.accent.withOpacity(0.3),
         ),
       ),
       child: Row(
@@ -286,7 +290,7 @@ class _StreakBadge extends StatelessWidget {
           Text(
             '$streak',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppColors.accent,
+                  color: c.accent,
                   fontWeight: FontWeight.w800,
                 ),
           ),
@@ -309,6 +313,7 @@ class _DailyChallengeHero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors.colors;
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -318,23 +323,21 @@ class _DailyChallengeHero extends StatelessWidget {
           gradient: isCompleted
               ? LinearGradient(
                   colors: [
-                    AppColors.success.withOpacity(0.12),
-                    AppColors.success.withOpacity(0.06),
+                    c.success.withOpacity(0.12),
+                    c.success.withOpacity(0.06),
                   ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 )
-              : AppColors.heroGradient,
+              : c.heroGradient,
           border: Border.all(
-            color: isCompleted
-                ? AppColors.success.withOpacity(0.25)
-                : AppColors.surfaceBorder,
+            color: isCompleted ? c.success.withOpacity(0.25) : c.surfaceBorder,
           ),
           boxShadow: [
             BoxShadow(
               color: isCompleted
-                  ? AppColors.success.withOpacity(0.1)
-                  : AppColors.accentBlue.withOpacity(0.15),
+                  ? c.success.withOpacity(0.1)
+                  : c.accentBlue.withOpacity(0.15),
               blurRadius: 32,
               spreadRadius: -8,
             ),
@@ -349,15 +352,15 @@ class _DailyChallengeHero extends StatelessWidget {
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: isCompleted
-                        ? AppColors.success.withOpacity(0.2)
-                        : AppColors.accent.withOpacity(0.2),
+                        ? c.success.withOpacity(0.2)
+                        : c.accent.withOpacity(0.2),
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Icon(
                     isCompleted
                         ? Icons.check_circle_rounded
                         : Icons.local_fire_department_rounded,
-                    color: isCompleted ? AppColors.success : AppColors.accent,
+                    color: isCompleted ? c.success : c.accent,
                     size: 28,
                   ),
                 ),
@@ -369,9 +372,7 @@ class _DailyChallengeHero extends StatelessWidget {
                       Text(
                         isCompleted ? 'Reto de hoy' : 'Reto de hoy',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                              color: isCompleted
-                                  ? AppColors.success
-                                  : AppColors.textPrimary,
+                              color: isCompleted ? c.success : c.textPrimary,
                               fontWeight: FontWeight.w700,
                             ),
                       ),
@@ -382,8 +383,8 @@ class _DailyChallengeHero extends StatelessWidget {
                             : '1 puzzle · 1 oportunidad',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: isCompleted
-                                  ? AppColors.success.withOpacity(0.8)
-                                  : AppColors.textSecondary,
+                                  ? c.success.withOpacity(0.8)
+                                  : c.textSecondary,
                             ),
                       ),
                     ],
@@ -393,7 +394,7 @@ class _DailyChallengeHero extends StatelessWidget {
                   isCompleted
                       ? Icons.check_rounded
                       : Icons.arrow_forward_rounded,
-                  color: isCompleted ? AppColors.success : AppColors.accent,
+                  color: isCompleted ? c.success : c.accent,
                   size: 26,
                 ),
               ],
@@ -416,6 +417,7 @@ class _CountdownTimer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors.colors;
     final hours = timeUntilMidnight.inHours;
     final minutes = timeUntilMidnight.inMinutes.remainder(60);
     final seconds = timeUntilMidnight.inSeconds.remainder(60);
@@ -425,14 +427,14 @@ class _CountdownTimer extends StatelessWidget {
         Text(
           'Siguiente',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: AppColors.textMuted,
+                color: c.textMuted,
               ),
         ),
         const SizedBox(width: 10),
         _Digit(value: hours),
-        const Text(':', style: TextStyle(color: AppColors.textMuted)),
+        Text(':', style: TextStyle(color: c.textMuted)),
         _Digit(value: minutes),
-        const Text(':', style: TextStyle(color: AppColors.textMuted)),
+        Text(':', style: TextStyle(color: c.textMuted)),
         _Digit(value: seconds),
       ],
     );
@@ -446,11 +448,12 @@ class _Digit extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors.colors;
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 2),
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
       decoration: BoxDecoration(
-        color: AppColors.surfaceLight,
+        color: c.surfaceLight,
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
@@ -471,14 +474,15 @@ class _WeeklyProgress extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors.colors;
     final weekDays = _getWeekDays();
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: c.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.surfaceBorder),
+        border: Border.all(color: c.surfaceBorder),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -491,7 +495,7 @@ class _WeeklyProgress extends StatelessWidget {
               Text(
                 day['label'] as String,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: isToday ? AppColors.accent : AppColors.textMuted,
+                      color: isToday ? c.accent : c.textMuted,
                       fontWeight: isToday ? FontWeight.w700 : FontWeight.w500,
                       fontSize: 10,
                     ),
@@ -503,13 +507,12 @@ class _WeeklyProgress extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: isCompleted
-                      ? AppColors.success
+                      ? c.success
                       : isToday
-                          ? AppColors.accent.withOpacity(0.3)
-                          : AppColors.surfaceLight,
-                  border: isToday
-                      ? Border.all(color: AppColors.accent, width: 1.5)
-                      : null,
+                          ? c.accent.withOpacity(0.3)
+                          : c.surfaceLight,
+                  border:
+                      isToday ? Border.all(color: c.accent, width: 1.5) : null,
                 ),
               ),
             ],
@@ -548,14 +551,15 @@ class _ContinueCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors.colors;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: c.surface,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: AppColors.surfaceBorder),
+          border: Border.all(color: c.surfaceBorder),
         ),
         child: Row(
           children: [
@@ -563,12 +567,12 @@ class _ContinueCard extends StatelessWidget {
               width: 44,
               height: 44,
               decoration: BoxDecoration(
-                color: AppColors.accentBlue.withOpacity(0.12),
+                color: c.accentBlue.withOpacity(0.12),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.play_circle_outline_rounded,
-                color: AppColors.accentBlue,
+                color: c.accentBlue,
                 size: 24,
               ),
             ),
@@ -585,7 +589,7 @@ class _ContinueCard extends StatelessWidget {
                   Text(
                     'Retoma donde lo dejaste',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.textMuted,
+                          color: c.textMuted,
                         ),
                   ),
                 ],
@@ -594,13 +598,13 @@ class _ContinueCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               decoration: BoxDecoration(
-                color: _getModeColor().withOpacity(0.12),
+                color: _getModeColor(context).withOpacity(0.12),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
                 _getModeLabel(),
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: _getModeColor(),
+                      color: _getModeColor(context),
                       fontWeight: FontWeight.w600,
                     ),
               ),
@@ -611,10 +615,11 @@ class _ContinueCard extends StatelessWidget {
     );
   }
 
-  Color _getModeColor() {
-    if (gameMode == GameMode.daily) return AppColors.accent;
-    if (isZenMode) return AppColors.success;
-    return AppColors.accentBlue;
+  Color _getModeColor(BuildContext context) {
+    final c = context.appColors.colors;
+    if (gameMode == GameMode.daily) return c.accent;
+    if (isZenMode) return c.success;
+    return c.accentBlue;
   }
 
   String _getModeLabel() {
@@ -637,18 +642,19 @@ class _MotivationalMessage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors.colors;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: c.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.surfaceBorder),
+        border: Border.all(color: c.surfaceBorder),
       ),
       child: Row(
         children: [
           Icon(
             _getIcon(),
-            color: _getColor(),
+            color: _getColor(context),
             size: 18,
           ),
           const SizedBox(width: 10),
@@ -656,7 +662,7 @@ class _MotivationalMessage extends StatelessWidget {
             child: Text(
               _getMessage(),
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: _getColor(),
+                    color: _getColor(context),
                   ),
             ),
           ),
@@ -672,11 +678,12 @@ class _MotivationalMessage extends StatelessWidget {
     return Icons.trending_up_rounded;
   }
 
-  Color _getColor() {
-    if (isDailyCompleted) return AppColors.success;
-    if (hasSavedGame) return AppColors.accentBlue;
-    if (currentStreak > 0) return AppColors.accent;
-    return AppColors.textSecondary;
+  Color _getColor(BuildContext context) {
+    final c = context.appColors.colors;
+    if (isDailyCompleted) return c.success;
+    if (hasSavedGame) return c.accentBlue;
+    if (currentStreak > 0) return c.accent;
+    return c.textSecondary;
   }
 
   String _getMessage() {
@@ -752,16 +759,17 @@ class _QuickStatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors.colors;
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14),
       decoration: BoxDecoration(
-        color: AppColors.surface,
+        color: c.surface,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.surfaceBorder),
+        border: Border.all(color: c.surfaceBorder),
       ),
       child: Column(
         children: [
-          Icon(icon, color: AppColors.textMuted, size: 16),
+          Icon(icon, color: c.textMuted, size: 16),
           const SizedBox(height: 6),
           Text(
             value,
@@ -773,7 +781,7 @@ class _QuickStatCard extends StatelessWidget {
           Text(
             label,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.textMuted,
+                  color: c.textMuted,
                   fontSize: 9,
                 ),
           ),
@@ -794,6 +802,7 @@ class _NewGameSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors.colors;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -801,7 +810,7 @@ class _NewGameSection extends StatelessWidget {
           'NUEVA PARTIDA',
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 letterSpacing: 1.8,
-                color: AppColors.textMuted,
+                color: c.textMuted,
               ),
         ),
         const SizedBox(height: 10),
@@ -916,24 +925,25 @@ class _SecondaryActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.appColors.colors;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
-          color: AppColors.surface,
+          color: c.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: AppColors.surfaceBorder),
+          border: Border.all(color: c.surfaceBorder),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, color: AppColors.textMuted, size: 16),
+            Icon(icon, color: c.textMuted, size: 16),
             const SizedBox(width: 8),
             Text(
               label,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textSecondary,
+                    color: c.textSecondary,
                   ),
             ),
           ],
