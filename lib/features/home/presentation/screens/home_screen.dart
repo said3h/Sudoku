@@ -294,6 +294,14 @@ class _StreakBadge extends StatelessWidget {
                   fontWeight: FontWeight.w800,
                 ),
           ),
+          const SizedBox(width: 4),
+          Text(
+            'días',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: c.accent,
+                  fontWeight: FontWeight.w500,
+                ),
+          ),
         ],
       ),
     );
@@ -692,6 +700,9 @@ class _MotivationalMessage extends StatelessWidget {
       return 'Racha de $currentStreak dias';
     }
     if (isDailyCompleted) return 'Reto completado';
+    if (currentStreak > 0 && !isDailyCompleted) {
+      return 'Completa el reto de hoy';
+    }
     if (currentStreak > 0) return 'Mantén tu racha de $currentStreak dias';
     return 'Completa el reto diario para empezar tu racha';
   }
