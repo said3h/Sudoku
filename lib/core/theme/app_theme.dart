@@ -56,16 +56,27 @@ class AppTheme {
       ),
     );
 
-    final scheme = ColorScheme.dark(
-      primary: colors.accent,
-      onPrimary: colors.primary,
-      secondary: colors.accentBlue,
-      onSecondary: colors.primary,
-      error: colors.error,
-      onError: colors.primary,
-      surface: colors.surface,
-      onSurface: colors.textPrimary,
-    );
+    final scheme = brightness == Brightness.dark
+        ? ColorScheme.dark(
+            primary: colors.accent,
+            onPrimary: colors.primary,
+            secondary: colors.accentBlue,
+            onSecondary: colors.primary,
+            error: colors.error,
+            onError: colors.primary,
+            surface: colors.surface,
+            onSurface: colors.textPrimary,
+          )
+        : ColorScheme.light(
+            primary: colors.accent,
+            onPrimary: colors.primary,
+            secondary: colors.accentBlue,
+            onSecondary: colors.primary,
+            error: colors.error,
+            onError: colors.primary,
+            surface: colors.surface,
+            onSurface: colors.textPrimary,
+          );
 
     return ThemeData(
       useMaterial3: true,
@@ -107,7 +118,7 @@ class AppTheme {
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         labelStyle: baseTextTheme.bodySmall!,
         secondaryLabelStyle: baseTextTheme.bodySmall!,
-        brightness: Brightness.dark,
+        brightness: brightness,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(18),
           side: BorderSide(color: colors.surfaceBorder),

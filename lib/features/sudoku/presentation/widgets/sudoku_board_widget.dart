@@ -143,7 +143,7 @@ class _SelectionIndicator extends StatelessWidget {
           color: c.accentBlue.withOpacity(0.9),
           width: 1.5,
         ),
-        borderRadius: BorderRadius.circular(2),
+        borderRadius: BorderRadius.zero,
         boxShadow: [
           BoxShadow(
             color: c.accentBlue.withOpacity(0.25),
@@ -196,8 +196,8 @@ class _BoardCell extends StatelessWidget {
     var background = c.cellBackground;
     if (isPeer) background = c.cellPeer;
     if (isMatched) background = c.cellMatched;
-    if (isSelected) background = c.cellSelected;
     if (hasConflict) background = c.cellConflictSoft;
+    if (isSelected) background = c.cellSelected; // selected always wins
 
     return TweenAnimationBuilder<double>(
       tween: Tween<double>(begin: 0.96, end: isSelected ? 1 : 0.985),
@@ -251,7 +251,7 @@ class _BoardCell extends StatelessWidget {
                       ),
                     )
                   : cellNotes != null && cellNotes.isNotEmpty
-                      ? _NotesGrid(notes: cellNotes)
+                      ? _NotesGrid(notes: cellNotes, cellSize: size)
                       : const SizedBox.shrink(),
             ),
           ),
@@ -295,9 +295,10 @@ class _BoardCell extends StatelessWidget {
 }
 
 class _NotesGrid extends StatelessWidget {
-  const _NotesGrid({required this.notes});
+  const _NotesGrid({required this.notes, required this.cellSize});
 
   final Set<int> notes;
+  final double cellSize;
 
   @override
   Widget build(BuildContext context) {
@@ -316,9 +317,9 @@ class _NotesGrid extends StatelessWidget {
           return Center(
             child: Text(
               notes.contains(number) ? '$number' : '',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              style: TextStyle(
                     color: c.noteColor,
-                    fontSize: 10,
+                    fontSize: (cellSize * 0.28).clamp(7.0, 12.0),
                     fontWeight: FontWeight.w600,
                     letterSpacing: 0,
                   ),
@@ -354,7 +355,6 @@ class _SudokuGridPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    const inset = 3.0;
     final thinPaint = Paint()
       ..color = gridLine.withOpacity(0.82)
       ..strokeWidth = 0.5;
@@ -362,12 +362,12 @@ class _SudokuGridPainter extends CustomPainter {
       ..color = gridLineThick
       ..strokeWidth = 1.4;
 
-    final cellSize = (size.width - inset * 2) / 9;
+    final cellSize = size.width / 9;
     for (var index = 0; index <= 9; index++) {
-      final offset = inset + cellSize * index;
+      final offset = cellSize * index;
       final paint = index % 3 == 0 ? thickPaint : thinPaint;
-      canvas.drawLine(Offset(offset, inset), Offset(offset, size.height - inset), paint);
-      canvas.drawLine(Offset(inset, offset), Offset(size.width - inset, offset), paint);
+      canvas.drawLine(Offset(offset, 0), Offset(offset, size.height), paint);
+      canvas.drawLine(Offset(0, offset), Offset(size.width, offset), paint);
     }
   }
 

@@ -52,8 +52,11 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final settings = ref.watch(appSettingsProvider);
-    final todayKey = DateTime.now().toIso8601String().split('T').first;
-    final dailySeed = todayKey.hashCode;
+    final now = DateTime.now();
+    final todayKey =
+        '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
+    // Stable cross-platform seed: encode date as YYYYMMDD integer
+    final dailySeed = now.year * 10000 + now.month * 100 + now.day;
     final stats = SudokuGameStorage.loadStats();
     final savedGame = SudokuGameStorage.loadSavedGame();
     final c = context.appColors.colors;
@@ -122,11 +125,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     ).animate().fadeIn(delay: 100.ms).slideY(begin: 0.06),
                   if (shouldShowResume)
                     const SizedBox(height: 20),
-                  _MotivationalMessage(
-                    currentStreak: stats.currentStreak,
-                    isDailyCompleted: isDailyCompleted,
-                  ),
-                  const SizedBox(height: 18),
                   _WeeklyProgress(stats: stats),
                   const SizedBox(height: 18),
                   _QuickStatsRow(stats: stats),
@@ -639,72 +637,6 @@ class _ContinueCard extends StatelessWidget {
     if (gameMode == GameMode.daily) return 'Diaria';
     if (isZenMode) return 'Zen';
     return 'Clasica';
-  }
-}
-
-class _MotivationalMessage extends StatelessWidget {
-  const _MotivationalMessage({
-    required this.currentStreak,
-    required this.isDailyCompleted,
-  });
-
-  final int currentStreak;
-  final bool isDailyCompleted;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.appColors.colors;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: c.surface,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: c.surfaceBorder),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            _getIcon(),
-            color: _getColor(context),
-            size: 18,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              _getMessage(),
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: _getColor(context),
-                  ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  IconData _getIcon() {
-    if (isDailyCompleted) return Icons.celebration_outlined;
-    if (currentStreak > 0) return Icons.local_fire_department_outlined;
-    return Icons.trending_up_rounded;
-  }
-
-  Color _getColor(BuildContext context) {
-    final c = context.appColors.colors;
-    if (isDailyCompleted) return c.success;
-    if (currentStreak > 0) return c.accent;
-    return c.textSecondary;
-  }
-
-  String _getMessage() {
-    if (isDailyCompleted && currentStreak > 1) {
-      return 'Racha de $currentStreak dias';
-    }
-    if (isDailyCompleted) return 'Reto completado';
-    if (currentStreak > 0 && !isDailyCompleted) {
-      return 'Completa el reto de hoy';
-    }
-    if (currentStreak > 0) return 'Mantén tu racha de $currentStreak dias';
-    return 'Completa el reto diario para empezar tu racha';
   }
 }
 
