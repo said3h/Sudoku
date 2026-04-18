@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/theme/app_colors.dart';
 import '../../domain/models/sudoku_board.dart';
 
 class SudokuBoardWidget extends StatelessWidget {
@@ -23,91 +22,78 @@ class SudokuBoardWidget extends StatelessWidget {
   final bool isZenMode;
   final void Function(int row, int col) onCellTap;
 
+  static const _boardBackground = Color(0xFF020617);
+  static const _blockBackground = Color(0xFF0F172A);
+  static const _cellBackground = Color(0xFF020617);
+  static const _primary = Color(0xFF38BDF8);
+  static const _secondary = Color(0xFF7DD3FC);
+  static const _onSurface = Color(0xFFF8FAFC);
+  static const _onSurfaceVariant = Color(0xFFCBD5E1);
+  static const _errorSoft = Color(0x33FFB4AB);
+  static const _error = Color(0xFFFFB4AB);
+
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors.colors;
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 18),
       child: Center(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 470),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: c.boardBackground,
-              borderRadius: BorderRadius.circular(28),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.24),
-                  blurRadius: 30,
-                  spreadRadius: -12,
-                  offset: const Offset(0, 20),
-                ),
-              ],
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(22),
-              child: AspectRatio(
-                aspectRatio: 1,
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final cellSize = constraints.maxWidth / 9;
-
-                    return Stack(
-                      children: [
-                        // Cells with ClipRRect (painted FIRST, below)
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(16),
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              color: c.boardBackground,
-                            ),
-                            child: Stack(
-                              children: [
-                                Column(
-                                  children: List.generate(9, (row) {
-                                    return Expanded(
-                                      child: Row(
-                                        children: List.generate(9, (col) {
-                                          return Expanded(
-                                            child: _BoardCell(
-                                              row: row,
-                                              col: col,
-                                              size: cellSize,
-                                              currentBoard: currentBoard,
-                                              givenCells: givenCells,
-                                              selectedCell: selectedCell,
-                                              solution: solution,
-                                              notes: notes,
-                                              isZenMode: isZenMode,
-                                              onTap: () => onCellTap(row, col),
-                                            ),
-                                          );
-                                        }),
-                                      ),
-                                    );
-                                  }),
-                                ),
-                                IgnorePointer(
-                                  child: _GridOverlay(cellSize: cellSize),
-                                ),
-                              ],
+          constraints: const BoxConstraints(maxWidth: 450),
+          child: AspectRatio(
+            aspectRatio: 1,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: _boardBackground,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: _primary.withOpacity(0.20), width: 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.40),
+                    blurRadius: 40,
+                    offset: const Offset(0, 20),
+                  ),
+                ],
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    color: _primary.withOpacity(0.27),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: Column(
+                      children: List.generate(3, (blockRow) {
+                        return Expanded(
+                          child: Padding(
+                            padding: EdgeInsets.only(bottom: blockRow == 2 ? 0 : 8),
+                            child: Row(
+                              children: List.generate(3, (blockCol) {
+                                return Expanded(
+                                  child: Padding(
+                                    padding: EdgeInsets.only(
+                                      right: blockCol == 2 ? 0 : 8,
+                                    ),
+                                    child: _Block(
+                                      blockRow: blockRow,
+                                      blockCol: blockCol,
+                                      currentBoard: currentBoard,
+                                      givenCells: givenCells,
+                                      selectedCell: selectedCell,
+                                      notes: notes,
+                                      isZenMode: isZenMode,
+                                      onCellTap: onCellTap,
+                                    ),
+                                  ),
+                                );
+                              }),
                             ),
                           ),
-                        ),
-                        // Selection indicator - OUTSIDE ClipRRect, painted LAST so it's on TOP
-                        if (selectedCell != null)
-                          Positioned(
-                            left: selectedCell!.$2 * cellSize,
-                            top: selectedCell!.$1 * cellSize,
-                            width: cellSize,
-                            height: cellSize,
-                            child: _SelectionIndicator(
-                              cellSize: cellSize,
-                            ),
-                          ),
-                      ],
-                    );
-                  },
+                        );
+                      }),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -118,31 +104,64 @@ class SudokuBoardWidget extends StatelessWidget {
   }
 }
 
-class _SelectionIndicator extends StatelessWidget {
-  const _SelectionIndicator({required this.cellSize});
+class _Block extends StatelessWidget {
+  const _Block({
+    required this.blockRow,
+    required this.blockCol,
+    required this.currentBoard,
+    required this.givenCells,
+    required this.selectedCell,
+    required this.notes,
+    required this.isZenMode,
+    required this.onCellTap,
+  });
 
-  final double cellSize;
+  final int blockRow;
+  final int blockCol;
+  final SudokuBoard currentBoard;
+  final Set<(int, int)> givenCells;
+  final (int, int)? selectedCell;
+  final Map<(int, int), Set<int>> notes;
+  final bool isZenMode;
+  final void Function(int row, int col) onCellTap;
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors.colors;
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 160),
-      curve: Curves.easeOutCubic,
+    return DecoratedBox(
       decoration: BoxDecoration(
-        color: c.cellSelected.withOpacity(0.85),
-        border: Border.all(
-          color: const Color(0xFF5AADFF),
-          width: 2.5,
-        ),
-        borderRadius: BorderRadius.zero,
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF5AADFF).withOpacity(0.35),
-            blurRadius: 12,
-            spreadRadius: 0,
-          ),
-        ],
+        color: SudokuBoardWidget._blockBackground,
+        borderRadius: BorderRadius.circular(3),
+      ),
+      child: Column(
+        children: List.generate(3, (innerRow) {
+          return Expanded(
+            child: Padding(
+              padding: EdgeInsets.only(bottom: innerRow == 2 ? 0 : 1),
+              child: Row(
+                children: List.generate(3, (innerCol) {
+                  final row = blockRow * 3 + innerRow;
+                  final col = blockCol * 3 + innerCol;
+
+                  return Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.only(right: innerCol == 2 ? 0 : 1),
+                      child: _BoardCell(
+                        row: row,
+                        col: col,
+                        currentBoard: currentBoard,
+                        givenCells: givenCells,
+                        selectedCell: selectedCell,
+                        notes: notes,
+                        isZenMode: isZenMode,
+                        onTap: () => onCellTap(row, col),
+                      ),
+                    ),
+                  );
+                }),
+              ),
+            ),
+          );
+        }),
       ),
     );
   }
@@ -152,11 +171,9 @@ class _BoardCell extends StatelessWidget {
   const _BoardCell({
     required this.row,
     required this.col,
-    required this.size,
     required this.currentBoard,
     required this.givenCells,
     required this.selectedCell,
-    required this.solution,
     required this.notes,
     required this.isZenMode,
     required this.onTap,
@@ -164,35 +181,46 @@ class _BoardCell extends StatelessWidget {
 
   final int row;
   final int col;
-  final double size;
   final SudokuBoard currentBoard;
   final Set<(int, int)> givenCells;
   final (int, int)? selectedCell;
-  final SudokuBoard solution;
   final Map<(int, int), Set<int>> notes;
   final bool isZenMode;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors.colors;
     final value = currentBoard[row][col];
     final isGiven = givenCells.contains((row, col));
     final isSelected = selectedCell == (row, col);
     final isPeer = _isPeer();
     final isMatched = _isMatchedValue();
-    final hasConflict =
-        !isGiven && !isZenMode && value != null && _hasConflict(value);
+    final hasConflict = !isGiven && !isZenMode && value != null && _hasConflict(value);
     final cellNotes = notes[(row, col)];
 
-    var background = c.cellBackground;
-    if (isPeer) background = c.cellPeer;
-    if (isMatched) background = c.cellMatched;
-    if (hasConflict) background = c.cellConflictSoft;
-    if (isSelected) background = c.cellSelected; // selected always wins
+    Color background = SudokuBoardWidget._cellBackground;
+    Color foreground = isGiven
+        ? SudokuBoardWidget._onSurface
+        : SudokuBoardWidget._primary;
+
+    if (isPeer) {
+      background = SudokuBoardWidget._blockBackground;
+    }
+    if (isMatched) {
+      background = SudokuBoardWidget._primary.withOpacity(0.14);
+      foreground = SudokuBoardWidget._secondary;
+    }
+    if (hasConflict) {
+      background = SudokuBoardWidget._errorSoft;
+      foreground = SudokuBoardWidget._error;
+    }
+    if (isSelected) {
+      background = SudokuBoardWidget._blockBackground;
+      foreground = hasConflict ? SudokuBoardWidget._error : SudokuBoardWidget._primary;
+    }
 
     return TweenAnimationBuilder<double>(
-      tween: Tween<double>(begin: 0.96, end: isSelected ? 1 : 0.985),
+      tween: Tween<double>(begin: 0.98, end: isSelected ? 1 : 0.99),
       duration: const Duration(milliseconds: 180),
       curve: Curves.easeOutCubic,
       builder: (context, scale, child) {
@@ -203,48 +231,52 @@ class _BoardCell extends StatelessWidget {
         child: InkWell(
           onTap: onTap,
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 160),
+            duration: const Duration(milliseconds: 180),
             curve: Curves.easeOutCubic,
             decoration: BoxDecoration(
               color: background,
               border: Border.all(
-                color: hasConflict
-                    ? c.cellConflict.withOpacity(0.5)
-                    : c.gridLine.withOpacity(0.68),
-                width: 0.35,
+                color: isSelected
+                    ? SudokuBoardWidget._primary
+                    : Colors.white.withOpacity(0.00),
+                width: isSelected ? 2 : 0,
               ),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: SudokuBoardWidget._primary.withOpacity(0.30),
+                        blurRadius: 15,
+                        spreadRadius: 0,
+                      ),
+                    ]
+                  : null,
             ),
             child: Center(
               child: value != null
                   ? AnimatedSwitcher(
                       duration: const Duration(milliseconds: 160),
                       transitionBuilder: (child, animation) {
-                        return ScaleTransition(
-                          scale: Tween<double>(begin: 0.82, end: 1)
-                              .animate(animation),
-                          child:
-                              FadeTransition(opacity: animation, child: child),
+                        return FadeTransition(
+                          opacity: animation,
+                          child: ScaleTransition(
+                            scale: Tween<double>(begin: 0.88, end: 1).animate(animation),
+                            child: child,
+                          ),
                         );
                       },
                       child: Text(
                         '$value',
                         key: ValueKey('cell-$row-$col-$value'),
                         style: TextStyle(
-                          fontSize: size * 0.46,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: -0.5,
-                          color: hasConflict
-                              ? c.cellConflict
-                              : isSelected
-                                  ? Colors.white
-                                  : isGiven
-                                      ? c.givenNumber
-                                      : c.userNumber,
+                          fontSize: 28,
+                          height: 1,
+                          fontWeight: isGiven ? FontWeight.w600 : FontWeight.w300,
+                          color: foreground,
                         ),
                       ),
                     )
                   : cellNotes != null && cellNotes.isNotEmpty
-                      ? _NotesGrid(notes: cellNotes, cellSize: size)
+                      ? _NotesGrid(notes: cellNotes)
                       : const SizedBox.shrink(),
             ),
           ),
@@ -288,14 +320,12 @@ class _BoardCell extends StatelessWidget {
 }
 
 class _NotesGrid extends StatelessWidget {
-  const _NotesGrid({required this.notes, required this.cellSize});
+  const _NotesGrid({required this.notes});
 
   final Set<int> notes;
-  final double cellSize;
 
   @override
   Widget build(BuildContext context) {
-    final c = context.appColors.colors;
     return Padding(
       padding: const EdgeInsets.all(3),
       child: GridView.builder(
@@ -310,11 +340,10 @@ class _NotesGrid extends StatelessWidget {
           return Center(
             child: Text(
               notes.contains(number) ? '$number' : '',
-              style: TextStyle(
-                    color: c.noteColor,
-                    fontSize: (cellSize * 0.28).clamp(7.0, 12.0),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: SudokuBoardWidget._onSurfaceVariant,
+                    fontSize: 9,
                     fontWeight: FontWeight.w600,
-                    letterSpacing: 0,
                   ),
             ),
           );
@@ -322,50 +351,4 @@ class _NotesGrid extends StatelessWidget {
       ),
     );
   }
-}
-
-class _GridOverlay extends StatelessWidget {
-  const _GridOverlay({required this.cellSize});
-
-  final double cellSize;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.appColors.colors;
-    return CustomPaint(
-      size: Size(cellSize * 9, cellSize * 9),
-      painter: _SudokuGridPainter(
-          gridLine: c.gridLine, gridLineThick: c.gridLineThick),
-    );
-  }
-}
-
-class _SudokuGridPainter extends CustomPainter {
-  _SudokuGridPainter({required this.gridLine, required this.gridLineThick});
-
-  final Color gridLine;
-  final Color gridLineThick;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final thinPaint = Paint()
-      ..color = gridLine.withOpacity(0.82)
-      ..strokeWidth = 0.5;
-    final thickPaint = Paint()
-      ..color = gridLineThick
-      ..strokeWidth = 1.4;
-
-    final cellSize = size.width / 9;
-    for (var index = 0; index <= 9; index++) {
-      final offset = cellSize * index;
-      final paint = index % 3 == 0 ? thickPaint : thinPaint;
-      canvas.drawLine(Offset(offset, 0), Offset(offset, size.height), paint);
-      canvas.drawLine(Offset(0, offset), Offset(size.width, offset), paint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _SudokuGridPainter oldDelegate) =>
-      oldDelegate.gridLine != gridLine ||
-      oldDelegate.gridLineThick != gridLineThick;
 }
