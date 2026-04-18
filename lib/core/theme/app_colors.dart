@@ -89,7 +89,7 @@ class AppColorScheme {
     surface: Color(0xFF121725),
     surfaceLight: Color(0xFF171D2D),
     surfaceElevated: Color(0xFF1B2233),
-    surfaceBorder: Color(0xFF3A4560),
+    surfaceBorder: Color(0xFF4A5A78),
     textPrimary: Color(0xFFF4F7FB),
     textSecondary: Color(0xFFB4BED1),
     textMuted: Color(0xFF79839A),
