@@ -35,7 +35,6 @@ class SudokuBoardWidget extends StatelessWidget {
             decoration: BoxDecoration(
               color: c.boardBackground,
               borderRadius: BorderRadius.circular(28),
-              border: Border.all(color: c.surfaceBorder, width: 1.5),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.24),
