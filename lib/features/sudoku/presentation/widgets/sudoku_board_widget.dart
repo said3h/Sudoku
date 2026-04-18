@@ -133,14 +133,14 @@ class _SelectionIndicator extends StatelessWidget {
       decoration: BoxDecoration(
         color: c.cellSelected.withOpacity(0.85),
         border: Border.all(
-          color: c.accentBlue.withOpacity(0.9),
-          width: 1.5,
+          color: const Color(0xFF5AADFF),
+          width: 2.5,
         ),
         borderRadius: BorderRadius.zero,
         boxShadow: [
           BoxShadow(
-            color: c.accentBlue.withOpacity(0.25),
-            blurRadius: 10,
+            color: const Color(0xFF5AADFF).withOpacity(0.35),
+            blurRadius: 12,
             spreadRadius: 0,
           ),
         ],

@@ -158,24 +158,55 @@ class _ActionButton extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(18),
-        child: Ink(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
           height: 60,
           decoration: BoxDecoration(
             color: isActive ? c.accentSoft : c.surface,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(
-              color: isActive ? c.accent.withOpacity(0.35) : c.surfaceBorder,
+              color: isActive ? c.accent : c.surfaceBorder,
+              width: isActive ? 1.5 : 0.5,
             ),
+            boxShadow: isActive
+                ? [
+                    BoxShadow(
+                      color: c.accent.withOpacity(0.2),
+                      blurRadius: 8,
+                      spreadRadius: 0,
+                    ),
+                  ]
+                : null,
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 20, color: color),
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  Icon(icon, size: 20, color: color),
+                  if (isActive)
+                    Positioned(
+                      right: -4,
+                      top: -4,
+                      child: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: c.accent,
+                          border: Border.all(color: c.surface, width: 1),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
               const SizedBox(height: 3),
               Text(
                 label,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: color,
+                      fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
                       fontSize: 10,
                     ),
               ),

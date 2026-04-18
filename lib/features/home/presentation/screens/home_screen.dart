@@ -496,46 +496,78 @@ class _WeeklyProgress extends StatelessWidget {
     final weekDays = _getWeekDays();
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: c.surface,
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: c.surfaceBorder),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: weekDays.map((day) {
-          final isCompleted = day['key'] == stats.lastCompletedDayKey;
-          final isToday = day['isToday'] == true;
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: weekDays.map((day) {
+              final isCompleted = day['key'] == stats.lastCompletedDayKey;
+              final isToday = day['isToday'] == true;
 
-          return Column(
-            children: [
-              Text(
-                day['label'] as String,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: isToday ? c.accent : c.textMuted,
-                      fontWeight: isToday ? FontWeight.w700 : FontWeight.w500,
-                      fontSize: 10,
+              return Column(
+                children: [
+                  Text(
+                    day['label'] as String,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: isToday ? c.accent : c.textMuted,
+                          fontWeight: isToday ? FontWeight.w700 : FontWeight.w500,
+                          fontSize: 10,
+                        ),
+                  ),
+                  const SizedBox(height: 6),
+                  Container(
+                    width: 14,
+                    height: 14,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isCompleted
+                          ? c.success
+                          : isToday
+                              ? c.accent.withOpacity(0.3)
+                              : c.surfaceLight,
+                      border: isToday
+                          ? Border.all(color: c.accent, width: 1.5)
+                          : Border.all(color: c.surfaceBorder, width: 0.5),
                     ),
-              ),
-              const SizedBox(height: 6),
-              Container(
-                width: 12,
-                height: 12,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isCompleted
-                      ? c.success
-                      : isToday
-                          ? c.accent.withOpacity(0.3)
-                          : c.surfaceLight,
-                  border:
-                      isToday ? Border.all(color: c.accent, width: 1.5) : null,
+                    child: isCompleted
+                        ? Icon(
+                            Icons.check,
+                            size: 10,
+                            color: Colors.white,
+                          )
+                        : null,
+                  ),
+                ],
+              );
+            }).toList(),
+          ),
+          if (stats.currentStreak > 0) ...[
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Icon(
+                  Icons.local_fire_department_rounded,
+                  color: c.accent,
+                  size: 14,
                 ),
-              ),
-            ],
-          );
-        }).toList(),
+                const SizedBox(width: 6),
+                Text(
+                  '${stats.currentStreak} días de racha',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: c.accent,
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+              ],
+            ),
+          ],
+        ],
       ),
     );
   }
