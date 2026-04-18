@@ -236,9 +236,11 @@ class _BoardCell extends StatelessWidget {
                           letterSpacing: -0.5,
                           color: hasConflict
                               ? c.cellConflict
-                              : isGiven
-                                  ? c.givenNumber
-                                  : c.userNumber,
+                              : isSelected
+                                  ? Colors.white
+                                  : isGiven
+                                      ? c.givenNumber
+                                      : c.userNumber,
                         ),
                       ),
                     )
