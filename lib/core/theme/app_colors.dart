@@ -103,7 +103,7 @@ class AppColorScheme {
     cellConflictSoft: Color(0x28EA8E8A),
     cellSuccess: Color(0xFF27AE60),
     givenNumber: Color(0xFFF4F7FB),
-    userNumber: Color(0xFF82BFFF),
+    userNumber: Color(0xFFB8D8FF),
     noteColor: Color(0xFF7B88A2),
     gridLine: Color(0xFF283146),
     gridLineThick: Color(0xFF53617F),

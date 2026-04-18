@@ -33,16 +33,9 @@ class SudokuBoardWidget extends StatelessWidget {
           constraints: const BoxConstraints(maxWidth: 470),
           child: DecoratedBox(
             decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  c.surface.withOpacity(0.94),
-                  c.boardBackground,
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
+              color: c.boardBackground,
               borderRadius: BorderRadius.circular(28),
-              border: Border.all(color: c.surfaceBorder),
+              border: Border.all(color: c.surfaceBorder, width: 1.5),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withOpacity(0.24),
@@ -238,9 +231,8 @@ class _BoardCell extends StatelessWidget {
                         '$value',
                         key: ValueKey('cell-$row-$col-$value'),
                         style: TextStyle(
-                          fontSize: size * 0.44,
-                          fontWeight:
-                              isGiven ? FontWeight.w700 : FontWeight.w500,
+                          fontSize: size * 0.46,
+                          fontWeight: FontWeight.w700,
                           letterSpacing: -0.5,
                           color: hasConflict
                               ? c.cellConflict
