@@ -6,7 +6,9 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'core/constants/app_constants.dart';
 import 'core/navigation/app_router.dart';
 import 'core/providers/app_settings_provider.dart';
+import 'core/theme/app_colors.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/app_theme_preset.dart';
 import 'features/sudoku/data/sudoku_game_storage.dart';
 
 Future<void> main() async {
@@ -77,10 +79,14 @@ class _SudokuAppState extends ConsumerState<SudokuApp>
   @override
   Widget build(BuildContext context) {
     final settings = ref.watch(appSettingsProvider);
-    final themeMode = settings.themeMode;
+    final themeMode = settings.themePreset == AppThemePreset.adaptive
+        ? settings.themeMode
+        : ThemeMode.dark;
 
     Brightness effectiveBrightness;
-    if (themeMode == ThemeMode.light) {
+    if (settings.themePreset != AppThemePreset.adaptive) {
+      effectiveBrightness = Brightness.dark;
+    } else if (themeMode == ThemeMode.light) {
       effectiveBrightness = Brightness.light;
     } else if (themeMode == ThemeMode.dark) {
       effectiveBrightness = Brightness.dark;
@@ -94,8 +100,14 @@ class _SudokuAppState extends ConsumerState<SudokuApp>
     return MaterialApp.router(
       title: AppConstants.appName,
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
+      theme: AppTheme.buildTheme(
+        AppColorScheme.forPreset(settings.themePreset, Brightness.light),
+        Brightness.light,
+      ),
+      darkTheme: AppTheme.buildTheme(
+        AppColorScheme.forPreset(settings.themePreset, Brightness.dark),
+        Brightness.dark,
+      ),
       themeMode: themeMode,
       routerConfig: AppRouter.router,
     );

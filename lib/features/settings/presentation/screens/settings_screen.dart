@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/providers/app_settings_provider.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_theme_preset.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -26,6 +27,11 @@ class SettingsScreen extends ConsumerWidget {
             currentMode: settings.themeMode,
             onChanged: notifier.setThemeMode,
           ),
+          const SizedBox(height: 14),
+          _ThemePresetSelector(
+            currentPreset: settings.themePreset,
+            onChanged: notifier.setThemePreset,
+          ),
           const SizedBox(height: 20),
           _SettingsTile(
             title: 'Haptics premium',
@@ -44,6 +50,61 @@ class SettingsScreen extends ConsumerWidget {
             subtitle: 'Sin presion por errores al empezar una partida nueva.',
             value: settings.zenModeEnabled,
             onChanged: notifier.setZenMode,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ThemePresetSelector extends StatelessWidget {
+  const _ThemePresetSelector({
+    required this.currentPreset,
+    required this.onChanged,
+  });
+
+  final AppThemePreset currentPreset;
+  final ValueChanged<AppThemePreset> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.appColors.colors;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: c.surfaceBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Tema premium',
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 10,
+            runSpacing: 10,
+            children: AppThemePreset.values.map((preset) {
+              final isSelected = preset == currentPreset;
+              return ChoiceChip(
+                selected: isSelected,
+                label: Text(preset.label),
+                onSelected: (_) => onChanged(preset),
+                selectedColor: c.accentSoft,
+                backgroundColor: c.surfaceLight,
+                side: BorderSide(
+                  color: isSelected ? c.accent : c.surfaceBorder,
+                ),
+                labelStyle: TextStyle(
+                  color: isSelected ? c.accent : c.textSecondary,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
+                ),
+              );
+            }).toList(),
           ),
         ],
       ),

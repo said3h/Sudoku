@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../core/theme/app_colors.dart';
 import '../../domain/models/sudoku_board.dart';
 
 class SudokuBoardWidget extends StatelessWidget {
@@ -22,37 +23,9 @@ class SudokuBoardWidget extends StatelessWidget {
   final bool isZenMode;
   final void Function(int row, int col) onCellTap;
 
-  static const _darkPalette = _BoardPalette(
-    boardBackground: Color(0xFF020617),
-    blockBackground: Color(0xFF0F172A),
-    cellBackground: Color(0xFF020617),
-    primary: Color(0xFF38BDF8),
-    secondary: Color(0xFF7DD3FC),
-    onSurface: Color(0xFFF8FAFC),
-    onSurfaceVariant: Color(0xFFCBD5E1),
-    errorSoft: Color(0x33FFB4AB),
-    error: Color(0xFFFFB4AB),
-    shadow: Color(0x66000000),
-  );
-
-  static const _lightPalette = _BoardPalette(
-    boardBackground: Color(0xFFFAF5F0),
-    blockBackground: Color(0xFFE8D5CE),
-    cellBackground: Color(0xFFFAF5F0),
-    primary: Color(0xFFD89A8F),
-    secondary: Color(0xFF9A8B88),
-    onSurface: Color(0xFF2D2422),
-    onSurfaceVariant: Color(0xFF534340),
-    errorSoft: Color(0x22BA1A1A),
-    error: Color(0xFFBA1A1A),
-    shadow: Color(0x33D89A8F),
-  );
-
   @override
   Widget build(BuildContext context) {
-    final palette = Theme.of(context).brightness == Brightness.light
-        ? _lightPalette
-        : _darkPalette;
+    final palette = _BoardPalette.fromScheme(context.appColors.colors);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 18),
@@ -408,4 +381,19 @@ class _BoardPalette {
   final Color errorSoft;
   final Color error;
   final Color shadow;
+
+  factory _BoardPalette.fromScheme(AppColorScheme scheme) {
+    return _BoardPalette(
+      boardBackground: scheme.boardBackground,
+      blockBackground: scheme.cellSelected,
+      cellBackground: scheme.cellBackground,
+      primary: scheme.accent,
+      secondary: scheme.accentLight,
+      onSurface: scheme.givenNumber,
+      onSurfaceVariant: scheme.noteColor,
+      errorSoft: scheme.cellConflictSoft,
+      error: scheme.cellConflict,
+      shadow: scheme.accent.withOpacity(0.20),
+    );
+  }
 }

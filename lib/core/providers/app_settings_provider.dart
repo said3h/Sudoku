@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../settings/app_settings.dart';
 import '../settings/app_settings_storage.dart';
+import '../theme/app_theme_preset.dart';
 
 class AppSettingsNotifier extends StateNotifier<AppSettings> {
   AppSettingsNotifier() : super(AppSettingsStorage.load());
@@ -24,6 +25,11 @@ class AppSettingsNotifier extends StateNotifier<AppSettings> {
 
   Future<void> setThemeMode(ThemeMode value) async {
     state = state.copyWith(themeMode: value);
+    await AppSettingsStorage.save(state);
+  }
+
+  Future<void> setThemePreset(AppThemePreset value) async {
+    state = state.copyWith(themePreset: value);
     await AppSettingsStorage.save(state);
   }
 }
