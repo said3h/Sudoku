@@ -242,7 +242,7 @@ class _BoardCell extends StatelessWidget {
               border: Border.all(
                 color: isSelected
                     ? palette.primary
-                    : palette.onSurfaceVariant.withOpacity(0.16),
+                    : palette.onSurfaceVariant.withOpacity(0.85),
                 width: isSelected ? 2 : 0.5,
               ),
               boxShadow: isSelected
