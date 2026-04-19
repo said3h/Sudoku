@@ -107,6 +107,9 @@ class _NumberButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final c = context.appColors.colors;
+    final brightness = Theme.of(context).brightness;
+    final numberColor =
+        brightness == Brightness.dark ? c.accentLight : c.textPrimary;
 
     return Material(
       color: Colors.transparent,
@@ -124,8 +127,8 @@ class _NumberButton extends StatelessWidget {
             child: Text(
               '$number',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: c.accentBlue,
-                    fontWeight: FontWeight.w800,
+                    color: numberColor,
+                    fontWeight: FontWeight.w900,
                   ),
             ),
           ),

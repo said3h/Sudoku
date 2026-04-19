@@ -39,8 +39,8 @@ class SudokuBoardWidget extends StatelessWidget {
                 color: palette.boardBackground,
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(
-                  color: palette.primary.withOpacity(0.30),
-                  width: 2,
+                  color: palette.primary.withOpacity(0.22),
+                  width: 1.1,
                 ),
                 boxShadow: [
                   BoxShadow(
@@ -54,7 +54,7 @@ class SudokuBoardWidget extends StatelessWidget {
                 padding: const EdgeInsets.all(10),
                 child: DecoratedBox(
                   decoration: BoxDecoration(
-                    color: palette.primary,
+                    color: palette.primary.withOpacity(0.32),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Padding(
@@ -130,6 +130,10 @@ class _Block extends StatelessWidget {
       decoration: BoxDecoration(
         color: palette.blockBackground,
         borderRadius: BorderRadius.circular(3),
+        border: Border.all(
+          color: palette.primary.withOpacity(0.16),
+          width: 1.05,
+        ),
       ),
       child: Column(
         children: List.generate(3, (innerRow) {
@@ -238,8 +242,8 @@ class _BoardCell extends StatelessWidget {
               border: Border.all(
                 color: isSelected
                     ? palette.primary
-                    : Colors.white.withOpacity(0.00),
-                width: isSelected ? 2 : 0,
+                    : palette.onSurfaceVariant.withOpacity(0.16),
+                width: isSelected ? 2 : 0.5,
               ),
               boxShadow: isSelected
                   ? [
