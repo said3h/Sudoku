@@ -7,6 +7,7 @@ class SudokuStats {
   final int dailyChallengesCompleted;
   final String? lastCompletedDayKey;
   final Map<String, int> bestTimesMs;
+  final Set<String> completedDayKeys;
 
   const SudokuStats({
     this.gamesStarted = 0,
@@ -17,6 +18,7 @@ class SudokuStats {
     this.dailyChallengesCompleted = 0,
     this.lastCompletedDayKey,
     this.bestTimesMs = const {},
+    this.completedDayKeys = const {},
   });
 
   SudokuStats copyWith({
@@ -28,6 +30,7 @@ class SudokuStats {
     int? dailyChallengesCompleted,
     Object? lastCompletedDayKey = _sentinel,
     Map<String, int>? bestTimesMs,
+    Set<String>? completedDayKeys,
   }) {
     return SudokuStats(
       gamesStarted: gamesStarted ?? this.gamesStarted,
@@ -41,12 +44,14 @@ class SudokuStats {
           ? this.lastCompletedDayKey
           : lastCompletedDayKey as String?,
       bestTimesMs: bestTimesMs ?? this.bestTimesMs,
+      completedDayKeys: completedDayKeys ?? this.completedDayKeys,
     );
   }
 
   factory SudokuStats.fromMap(Map<dynamic, dynamic> rawMap) {
     final map = Map<dynamic, dynamic>.from(rawMap);
     final bestTimesRaw = map['bestTimesMs'];
+    final completedDaysRaw = map['completedDayKeys'];
 
     return SudokuStats(
       gamesStarted: map['gamesStarted'] as int? ?? 0,
@@ -62,6 +67,9 @@ class SudokuStats {
                 entry.key.toString(): entry.value as int,
             }
           : const {},
+      completedDayKeys: completedDaysRaw is List
+          ? completedDaysRaw.whereType<String>().toSet()
+          : const {},
     );
   }
 
@@ -75,6 +83,7 @@ class SudokuStats {
       'dailyChallengesCompleted': dailyChallengesCompleted,
       'lastCompletedDayKey': lastCompletedDayKey,
       'bestTimesMs': bestTimesMs,
+      'completedDayKeys': completedDayKeys.toList(),
     };
   }
 }

@@ -507,7 +507,7 @@ class _WeeklyProgress extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: weekDays.map((day) {
-              final isCompleted = day['key'] == stats.lastCompletedDayKey;
+              final isCompleted = stats.completedDayKeys.contains(day['key']);
               final isToday = day['isToday'] == true;
 
               return Column(
