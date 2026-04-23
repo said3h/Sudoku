@@ -223,70 +223,98 @@ class _BoardCell extends StatelessWidget {
       foreground = hasConflict ? palette.error : palette.primary;
     }
 
-    return TweenAnimationBuilder<double>(
-      tween: Tween<double>(begin: 0.98, end: isSelected ? 1 : 0.99),
-      duration: const Duration(milliseconds: 180),
-      curve: Curves.easeOutCubic,
-      builder: (context, scale, child) {
-        return Transform.scale(scale: scale, child: child);
-      },
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            curve: Curves.easeOutCubic,
-            decoration: BoxDecoration(
-              color: background,
-              border: Border.all(
-                color: isSelected
-                    ? palette.primary
-                    : palette.onSurfaceVariant.withOpacity(0.85),
-                width: isSelected ? 2 : 0.5,
-              ),
-              boxShadow: isSelected
-                  ? [
-                      BoxShadow(
-                        color: palette.primary.withOpacity(0.30),
-                        blurRadius: 15,
-                        spreadRadius: 0,
-                      ),
-                    ]
-                  : null,
-            ),
-            child: Center(
-              child: value != null
-                  ? AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 160),
-                      transitionBuilder: (child, animation) {
-                        return FadeTransition(
-                          opacity: animation,
-                          child: ScaleTransition(
-                            scale: Tween<double>(begin: 0.88, end: 1).animate(animation),
-                            child: child,
+    final semanticLabel = _buildSemanticLabel(value, isGiven, hasConflict, cellNotes);
+
+    return Semantics(
+      label: semanticLabel,
+      button: true,
+      selected: isSelected,
+      child: ExcludeSemantics(
+        child: TweenAnimationBuilder<double>(
+          tween: Tween<double>(begin: 0.98, end: isSelected ? 1 : 0.99),
+          duration: const Duration(milliseconds: 180),
+          curve: Curves.easeOutCubic,
+          builder: (context, scale, child) {
+            return Transform.scale(scale: scale, child: child);
+          },
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: onTap,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeOutCubic,
+                decoration: BoxDecoration(
+                  color: background,
+                  border: Border.all(
+                    color: isSelected
+                        ? palette.primary
+                        : palette.onSurfaceVariant.withOpacity(0.85),
+                    width: isSelected ? 2 : 0.5,
+                  ),
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: palette.primary.withOpacity(0.30),
+                            blurRadius: 15,
+                            spreadRadius: 0,
                           ),
-                        );
-                      },
-                      child: Text(
-                        '$value',
-                        key: ValueKey('cell-$row-$col-$value'),
-                        style: TextStyle(
-                          fontSize: 28,
-                          height: 1,
-                          fontWeight: isGiven ? FontWeight.w600 : FontWeight.w300,
-                          color: foreground,
-                        ),
-                      ),
-                    )
-                  : cellNotes != null && cellNotes.isNotEmpty
-                      ? _NotesGrid(notes: cellNotes, palette: palette)
-                      : const SizedBox.shrink(),
+                        ]
+                      : null,
+                ),
+                child: Center(
+                  child: value != null
+                      ? AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 160),
+                          transitionBuilder: (child, animation) {
+                            return FadeTransition(
+                              opacity: animation,
+                              child: ScaleTransition(
+                                scale: Tween<double>(begin: 0.88, end: 1).animate(animation),
+                                child: child,
+                              ),
+                            );
+                          },
+                          child: Text(
+                            '$value',
+                            key: ValueKey('cell-$row-$col-$value'),
+                            style: TextStyle(
+                              fontSize: 28,
+                              height: 1,
+                              fontWeight: isGiven ? FontWeight.w600 : FontWeight.w300,
+                              color: foreground,
+                            ),
+                          ),
+                        )
+                      : cellNotes != null && cellNotes.isNotEmpty
+                          ? _NotesGrid(notes: cellNotes, palette: palette)
+                          : const SizedBox.shrink(),
+                ),
+              ),
             ),
           ),
         ),
       ),
     );
+  }
+
+  String _buildSemanticLabel(
+    int? value,
+    bool isGiven,
+    bool hasConflict,
+    Set<int>? cellNotes,
+  ) {
+    final pos = 'Fila ${row + 1}, columna ${col + 1}';
+    if (value != null) {
+      if (isGiven) return '$pos. $value, pista.';
+      if (hasConflict) return '$pos. $value, incorrecto.';
+      return '$pos. $value.';
+    }
+    if (cellNotes != null && cellNotes.isNotEmpty) {
+      final sorted = cellNotes.toList()..sort();
+      return '$pos. Notas: ${sorted.join(', ')}.';
+    }
+    return '$pos. Vacío.';
   }
 
   bool _isPeer() {

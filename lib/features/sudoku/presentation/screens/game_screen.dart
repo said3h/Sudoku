@@ -56,53 +56,56 @@ class GameScreen extends ConsumerWidget {
               onRestart: () => _showRestartDialog(context, notifier),
             ),
             Expanded(
-              child: Column(
-                children: [
-                  Expanded(
-                    child: Center(
-                      child: SudokuBoardWidget(
-                        currentBoard: gameState.currentBoard,
-                        givenCells: gameState.givenCells,
-                        selectedCell: gameState.selectedCell,
-                        solution: gameState.solution,
-                        notes: gameState.notes,
-                        isZenMode: gameState.isZenMode,
-                        onCellTap: (row, col) async {
-                          notifier.selectCell(row, col);
-                          await feedback.tap();
-                        },
+              child: AbsorbPointer(
+                absorbing: gameState.isComplete,
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: Center(
+                        child: SudokuBoardWidget(
+                          currentBoard: gameState.currentBoard,
+                          givenCells: gameState.givenCells,
+                          selectedCell: gameState.selectedCell,
+                          solution: gameState.solution,
+                          notes: gameState.notes,
+                          isZenMode: gameState.isZenMode,
+                          onCellTap: (row, col) async {
+                            notifier.selectCell(row, col);
+                            await feedback.tap();
+                          },
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 6),
-                  NumberPad(
-                    isNoteMode: gameState.isNoteMode,
-                    onNumberTap: (number) async {
-                      final isMistake = notifier.enterNumber(number);
-                      await feedback.tap();
-                      if (isMistake) {
-                        await feedback.softError();
-                      }
-                    },
-                    onClear: () async {
-                      notifier.clearCell();
-                      await feedback.tap();
-                    },
-                    onUndo: () async {
-                      notifier.undo();
-                      await feedback.tap();
-                    },
-                    onNoteToggle: () async {
-                      notifier.toggleNoteMode();
-                      await feedback.tap();
-                    },
-                    onHint: () async {
-                      notifier.hint();
-                      await feedback.tap();
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                ],
+                    const SizedBox(height: 6),
+                    NumberPad(
+                      isNoteMode: gameState.isNoteMode,
+                      onNumberTap: (number) async {
+                        final isMistake = notifier.enterNumber(number);
+                        await feedback.tap();
+                        if (isMistake) {
+                          await feedback.softError();
+                        }
+                      },
+                      onClear: () async {
+                        notifier.clearCell();
+                        await feedback.tap();
+                      },
+                      onUndo: () async {
+                        notifier.undo();
+                        await feedback.tap();
+                      },
+                      onNoteToggle: () async {
+                        notifier.toggleNoteMode();
+                        await feedback.tap();
+                      },
+                      onHint: () async {
+                        notifier.hint();
+                        await feedback.tap();
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                  ],
+                ),
               ),
             ),
           ],
