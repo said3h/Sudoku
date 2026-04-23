@@ -419,7 +419,7 @@ class _BoardPalette {
       boardBackground: scheme.boardBackground,
       blockBackground: scheme.cellSelected,
       cellBackground: scheme.cellBackground,
-      primary: scheme.accent,
+      primary: scheme.userNumber,
       secondary: scheme.accentLight,
       onSurface: scheme.givenNumber,
       onSurfaceVariant: scheme.noteColor,

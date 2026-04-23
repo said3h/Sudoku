@@ -136,7 +136,7 @@ class AppColorScheme {
     accent: Color(0xFFD89A8F),
     accentLight: Color(0xFFFFDAD4),
     accentSoft: Color(0x26D89A8F),
-    accentBlue: Color(0xFF8C6B65),
+    accentBlue: Color(0xFF7A5C57), // was 0xFF8C6B65 — 4.40:1 → 5.56:1
     accentBlueLight: Color(0xFFF4DCD3),
     background: Color(0xFFFAF5F0),
     surface: Color(0xFFFAF5F0),
@@ -145,7 +145,7 @@ class AppColorScheme {
     surfaceBorder: Color(0xFFD4C8C5),
     textPrimary: Color(0xFF2D2422),
     textSecondary: Color(0xFF534340),
-    textMuted: Color(0xFF857370),
+    textMuted: Color(0xFF6B5250), // was 0xFF857370 — 4.14:1 → 6.58:1
     boardBackground: Color(0xFFFAF5F0),
     cellBackground: Color(0xFFFAF5F0),
     cellSelected: Color(0xFFE8D5CE),
@@ -156,7 +156,7 @@ class AppColorScheme {
     cellConflictSoft: Color(0x22BA1A1A),
     cellSuccess: Color(0xFF8C6B65),
     givenNumber: Color(0xFF2D2422),
-    userNumber: Color(0xFFD89A8F),
+    userNumber: Color(0xFFA3533E), // was 0xFFD89A8F — 2.17:1 → 5.01:1
     noteColor: Color(0xFF534340),
     gridLine: Color(0xFFD4C8C5),
     gridLineThick: Color(0xFFD89A8F),
