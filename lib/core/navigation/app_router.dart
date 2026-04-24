@@ -39,7 +39,7 @@ class AppRouter {
           final resume = state.uri.queryParameters['resume'] == 'true';
           final dailyKey = state.uri.queryParameters['dailyKey'];
           final rawSeed = int.tryParse(state.uri.queryParameters['seed'] ?? '');
-          final seed = rawSeed == null ? null : rawSeed.abs();
+          final seed = rawSeed?.abs();
           final zenMode = state.uri.queryParameters['zen'] == 'true';
           final mode = dailyKey != null ? GameMode.daily : GameMode.classic;
 
