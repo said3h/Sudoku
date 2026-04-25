@@ -85,6 +85,11 @@ class SudokuGameStorage {
       bestTimes[difficultyKey] = elapsedMs;
     }
 
+    final completedDayKeys = Set<String>.from(stats.completedDayKeys);
+    if (completedDayKey != null) {
+      completedDayKeys.add(completedDayKey);
+    }
+
     _statsBox.put(
       statsKey,
       stats
@@ -97,6 +102,7 @@ class SudokuGameStorage {
                 (gameMode == GameMode.daily ? 1 : 0),
             lastCompletedDayKey: completedDayKey,
             bestTimesMs: bestTimes,
+            completedDayKeys: completedDayKeys,
           )
           .toMap(),
     );

@@ -4,12 +4,72 @@ on:
   push:
     branches:
       - main
+      - 'claude/**'
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
+    inputs:
+      flutter_version:
+        description: 'Flutter version (leave blank for default)'
+        required: false
+        default: '3.27.0'
+      skip_tests:
+        description: 'Skip tests and go straight to build'
+        required: false
+        default: 'false'
+        type: choice
+        options: ['false', 'true']
 
+env:
+  FLUTTER_VERSION: ${{ inputs.flutter_version || '3.27.0' }}
+
+# ---------------------------------------------------------------------------
+# Shared test job — both platform builds depend on this.
+# ---------------------------------------------------------------------------
 jobs:
+  test:
+    name: Tests & Analysis
+    runs-on: ubuntu-latest
+    if: ${{ inputs.skip_tests != 'true' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze --no-pub
+
+      - name: Test
+        run: flutter test --reporter=expanded
+
+      - name: Write job summary
+        if: always()
+        run: |
+          echo "## Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "| | |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| Branch | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Commit | \`${{ github.sha }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Flutter | \`${{ env.FLUTTER_VERSION }}\` |" >> $GITHUB_STEP_SUMMARY
+
+# ---------------------------------------------------------------------------
+# Android APK
+# ---------------------------------------------------------------------------
   android-apk:
     name: Android APK
     runs-on: ubuntu-latest
+    needs: [test]
+    if: always() && (needs.test.result == 'success' || needs.test.result == 'skipped')
 
     steps:
       - name: Checkout
@@ -24,17 +84,11 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: 3.27.0
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
       - name: Install dependencies
         run: flutter pub get
-
-      - name: Analyze
-        run: flutter analyze --no-pub
-
-      - name: Test
-        run: flutter test
 
       - name: Build APK
         run: flutter build apk --release
@@ -44,11 +98,29 @@ jobs:
         with:
           name: sudoku-premium-apk
           path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 30
           if-no-files-found: error
 
+      - name: Write job summary
+        run: |
+          APK_SIZE=$(du -sh build/app/outputs/flutter-apk/app-release.apk | cut -f1)
+          echo "## Android Build" >> $GITHUB_STEP_SUMMARY
+          echo "| | |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| Artifact | \`sudoku-premium-apk\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Size | $APK_SIZE |" >> $GITHUB_STEP_SUMMARY
+          echo "| Expires | 30 days |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "> **Instalar:** \`adb install app-release.apk\` o activar orígenes desconocidos y abrir el archivo." >> $GITHUB_STEP_SUMMARY
+
+# ---------------------------------------------------------------------------
+# iOS IPA (unsigned — para instalar con AltStore / sideloadly)
+# ---------------------------------------------------------------------------
   ios-ipa:
     name: iOS IPA
     runs-on: macos-latest
+    needs: [test]
+    if: always() && (needs.test.result == 'success' || needs.test.result == 'skipped')
 
     steps:
       - name: Checkout
@@ -57,22 +129,19 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: 3.27.0
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
       - name: Install dependencies
         run: flutter pub get
 
-      - name: Test
-        run: flutter test
-
       - name: Prepare iOS build files
         run: flutter build ios --release --config-only --no-codesign
 
       - name: Install CocoaPods dependencies
-        run: pod install --project-directory=ios
+        run: pod install --project-directory=ios --repo-update
 
-      - name: Build unsigned iOS app with Xcode
+      - name: Build unsigned iOS app
         run: |
           xcodebuild \
             -workspace ios/Runner.xcworkspace \
@@ -99,4 +168,18 @@ jobs:
         with:
           name: sudoku-premium-ipa
           path: build/ios/sudoku-premium-unsigned.ipa
+          retention-days: 30
           if-no-files-found: error
+
+      - name: Write job summary
+        run: |
+          IPA_SIZE=$(du -sh build/ios/sudoku-premium-unsigned.ipa | cut -f1)
+          echo "## iOS Build" >> $GITHUB_STEP_SUMMARY
+          echo "| | |" >> $GITHUB_STEP_SUMMARY
+          echo "|---|---|" >> $GITHUB_STEP_SUMMARY
+          echo "| Artifact | \`sudoku-premium-ipa\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Size | $IPA_SIZE |" >> $GITHUB_STEP_SUMMARY
+          echo "| Firma | Sin firma (unsigned) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Expires | 30 days |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "> **Instalar:** usa [AltStore](https://altstore.io) o [Sideloadly](https://sideloadly.io) con tu Apple ID." >> $GITHUB_STEP_SUMMARY

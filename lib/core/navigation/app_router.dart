@@ -27,13 +27,19 @@ class AppRouter {
         path: AppConstants.routeGame,
         name: 'game',
         pageBuilder: (context, state) {
-          final cluesCount = int.tryParse(
-                state.uri.queryParameters['clues'] ?? '',
-              ) ??
-              AppConstants.difficultyMedium;
+          final rawClues = int.tryParse(
+            state.uri.queryParameters['clues'] ?? '',
+          );
+          final cluesCount = (rawClues == null)
+              ? AppConstants.difficultyMedium
+              : rawClues.clamp(
+                  AppConstants.difficultyExpert,
+                  AppConstants.difficultyEasy,
+                );
           final resume = state.uri.queryParameters['resume'] == 'true';
           final dailyKey = state.uri.queryParameters['dailyKey'];
-          final seed = int.tryParse(state.uri.queryParameters['seed'] ?? '');
+          final rawSeed = int.tryParse(state.uri.queryParameters['seed'] ?? '');
+          final seed = rawSeed?.abs();
           final zenMode = state.uri.queryParameters['zen'] == 'true';
           final mode = dailyKey != null ? GameMode.daily : GameMode.classic;
 
