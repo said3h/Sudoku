@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../features/home/presentation/screens/home_screen.dart';
@@ -71,10 +72,18 @@ class AppRouter {
     ],
   );
 
-  static CustomTransitionPage<void> _buildPage({
+  static Page<void> _buildPage({
     required GoRouterState state,
     required Widget child,
   }) {
+    final isIos = !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS;
+    if (isIos) {
+      return CupertinoPage<void>(
+        key: state.pageKey,
+        child: child,
+      );
+    }
+
     return CustomTransitionPage<void>(
       key: state.pageKey,
       child: child,
