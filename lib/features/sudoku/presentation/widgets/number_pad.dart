@@ -109,7 +109,7 @@ class _NumberButton extends StatelessWidget {
     final c = context.appColors.colors;
     final brightness = Theme.of(context).brightness;
     final numberColor = brightness == Brightness.dark
-        ? c.accentBlue
+        ? c.primaryLight
         : c.textPrimary;
 
     return Material(

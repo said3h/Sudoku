@@ -55,6 +55,7 @@ class StatsScreen extends StatelessWidget {
                             sublabel: 'días seguidos',
                             value: '${stats.currentStreak}',
                             accent: c.accent,
+                            icon: '🔥',
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -63,6 +64,7 @@ class StatsScreen extends StatelessWidget {
                             label: 'Mejor racha',
                             value: '${stats.bestStreak}',
                             accent: c.accentBlue,
+                            icon: '⚡',
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -71,6 +73,7 @@ class StatsScreen extends StatelessWidget {
                             label: 'Completados',
                             value: '${stats.dailyChallengesCompleted}',
                             accent: c.success,
+                            icon: '🎯',
                           ),
                         ),
                       ],
@@ -143,43 +146,72 @@ class _HeroStat extends StatelessWidget {
     required this.value,
     required this.accent,
     this.sublabel,
+    this.icon = '🔥',
   });
 
   final String label;
   final String value;
   final Color accent;
   final String? sublabel;
+  final String icon;
 
   @override
   Widget build(BuildContext context) {
     final c = context.appColors.colors;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
       decoration: BoxDecoration(
-        color: c.surfaceLight.withOpacity(0.5),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: c.surfaceBorder.withOpacity(0.6)),
+        color: c.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(
+          color: accent.withOpacity(0.25),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: accent.withOpacity(0.08),
+            blurRadius: 20,
+            spreadRadius: 0,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         children: [
-          Text(
-            value,
-            style: Theme.of(context)
-                .textTheme
-                .headlineMedium
-                ?.copyWith(color: accent),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                icon,
+                style: const TextStyle(fontSize: 22),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                value,
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                      color: accent,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 32,
+                    ),
+              ),
+            ],
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 8),
           Text(
-            label,
+            label.toUpperCase(),
+            textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: c.textSecondary,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 1.2,
+                  fontSize: 10,
                 ),
           ),
           if (sublabel != null) ...[
-            const SizedBox(height: 1),
+            const SizedBox(height: 2),
             Text(
               sublabel!,
+              textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: c.textMuted,
                     fontSize: 9,

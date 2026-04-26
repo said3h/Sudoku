@@ -267,37 +267,25 @@ class _StreakBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.appColors.colors;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            c.accent.withOpacity(0.2),
-            c.accent.withOpacity(0.1),
-          ],
-        ),
+        color: c.accent.withOpacity(0.12),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: c.accent.withOpacity(0.3),
+          color: c.accent.withOpacity(0.2),
+          width: 1,
         ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           const Text('🔥', style: TextStyle(fontSize: 14)),
-          const SizedBox(width: 4),
+          const SizedBox(width: 6),
           Text(
             '$streak',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: c.accent,
-                  fontWeight: FontWeight.w800,
-                ),
-          ),
-          const SizedBox(width: 4),
-          Text(
-            'días',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: c.accent,
-                  fontWeight: FontWeight.w500,
+                  fontWeight: FontWeight.w900,
                 ),
           ),
         ],
@@ -496,14 +484,75 @@ class _WeeklyProgress extends StatelessWidget {
     final weekDays = _getWeekDays();
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: c.surface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(24),
         border: Border.all(color: c.surfaceBorder),
+        boxShadow: [
+          BoxShadow(
+            color: c.accent.withOpacity(0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         children: [
+          if (stats.currentStreak > 0) ...[
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: c.accent.withOpacity(0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Text('🔥', style: TextStyle(fontSize: 20)),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.alphabetic,
+                        children: [
+                          Text(
+                            '${stats.currentStreak}',
+                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                  color: c.accent,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 28,
+                                ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'DÍAS',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: c.accent,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 1.2,
+                                ),
+                          ),
+                        ],
+                      ),
+                      Text(
+                        'Racha actual activa',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: c.textMuted,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+            Divider(color: c.surfaceBorder.withOpacity(0.5), height: 1),
+            const SizedBox(height: 20),
+          ],
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: weekDays.map((day) {
@@ -536,7 +585,7 @@ class _WeeklyProgress extends StatelessWidget {
                           : Border.all(color: c.surfaceBorder, width: 0.5),
                     ),
                     child: isCompleted
-                        ? Icon(
+                        ? const Icon(
                             Icons.check,
                             size: 10,
                             color: Colors.white,
@@ -547,26 +596,6 @@ class _WeeklyProgress extends StatelessWidget {
               );
             }).toList(),
           ),
-          if (stats.currentStreak > 0) ...[
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                Icon(
-                  Icons.local_fire_department_rounded,
-                  color: c.accent,
-                  size: 14,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  '${stats.currentStreak} días de racha',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: c.accent,
-                        fontWeight: FontWeight.w600,
-                      ),
-                ),
-              ],
-            ),
-          ],
         ],
       ),
     );
