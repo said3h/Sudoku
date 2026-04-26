@@ -150,7 +150,7 @@ class AppColorScheme {
     cellBackground: Color(0xFFFAF5F0),
     cellSelected: Color(0xFFE8D5CE),
     cellHighlighted: Color(0xFFF4DCD3),
-    cellPeer: Color(0xFFEDDED9),
+    cellPeer: Color(0xFFEBDAD3),
     cellMatched: Color(0x26D89A8F),
     cellConflict: Color(0xFFBA1A1A),
     cellConflictSoft: Color(0x22BA1A1A),
