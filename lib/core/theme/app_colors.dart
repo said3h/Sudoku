@@ -99,7 +99,7 @@ class AppColorScheme {
     cellBackground: Color(0xFF020617),
     cellSelected: Color(0xFF0F172A),
     cellHighlighted: Color(0xFF1E293B),
-    cellPeer: Color(0xFF0F172A),
+    cellPeer: Color(0xFF1E293B),
     cellMatched: Color(0x2638BDF8),
     cellConflict: Color(0xFFFFB4AB),
     cellConflictSoft: Color(0x33FFB4AB),
@@ -150,7 +150,7 @@ class AppColorScheme {
     cellBackground: Color(0xFFFAF5F0),
     cellSelected: Color(0xFFE8D5CE),
     cellHighlighted: Color(0xFFF4DCD3),
-    cellPeer: Color(0xFFF0E6E3),
+    cellPeer: Color(0xFFF3EBE6),
     cellMatched: Color(0x26D89A8F),
     cellConflict: Color(0xFFBA1A1A),
     cellConflictSoft: Color(0x22BA1A1A),
@@ -336,7 +336,7 @@ class AppColorScheme {
 
   static const royalAmethyst = AppColorScheme(
     primary: Color(0xFF1E0B45),
-    primaryLight: Color(0xFFC084FC),
+    primaryLight: Color(0xFFF3E8FF),
     accent: Color(0xFFC084FC),
     accentLight: Color(0xFFE9D5FF),
     accentSoft: Color(0x26C084FC),

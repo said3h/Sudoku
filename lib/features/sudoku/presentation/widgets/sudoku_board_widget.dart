@@ -131,7 +131,7 @@ class _Block extends StatelessWidget {
         color: palette.blockBackground,
         borderRadius: BorderRadius.circular(3),
         border: Border.all(
-          color: palette.primary.withOpacity(0.18),
+          color: palette.primaryLight,
           width: 1.05,
         ),
       ),
@@ -208,18 +208,20 @@ class _BoardCell extends StatelessWidget {
     Color foreground = isGiven ? palette.onSurface : palette.primary;
 
     if (isPeer) {
-      background = palette.blockBackground;
+      background = palette.cellPeer;
     }
     if (isMatched) {
       background = palette.primary.withOpacity(0.14);
-      foreground = palette.secondary;
+      if (Theme.of(context).brightness == Brightness.dark) {
+        foreground = palette.secondary;
+      }
     }
     if (hasConflict) {
       background = palette.errorSoft;
       foreground = palette.error;
     }
     if (isSelected) {
-      background = palette.blockBackground;
+      background = palette.cellSelected;
       foreground = hasConflict ? palette.error : palette.primary;
     }
 
@@ -366,7 +368,10 @@ class _BoardPalette {
     required this.boardBackground,
     required this.blockBackground,
     required this.cellBackground,
+    required this.cellSelected,
+    required this.cellPeer,
     required this.primary,
+    required this.primaryLight,
     required this.secondary,
     required this.onSurface,
     required this.onSurfaceVariant,
@@ -378,7 +383,10 @@ class _BoardPalette {
   final Color boardBackground;
   final Color blockBackground;
   final Color cellBackground;
+  final Color cellSelected;
+  final Color cellPeer;
   final Color primary;
+  final Color primaryLight;
   final Color secondary;
   final Color onSurface;
   final Color onSurfaceVariant;
@@ -389,9 +397,12 @@ class _BoardPalette {
   factory _BoardPalette.fromScheme(AppColorScheme scheme) {
     return _BoardPalette(
       boardBackground: scheme.boardBackground,
-      blockBackground: scheme.cellSelected,
+      blockBackground: scheme.surfaceLight, // Used for block container decoration
       cellBackground: scheme.cellBackground,
+      cellSelected: scheme.cellSelected,
+      cellPeer: scheme.cellPeer,
       primary: scheme.accent,
+      primaryLight: scheme.primaryLight,
       secondary: scheme.accentLight,
       onSurface: scheme.givenNumber,
       onSurfaceVariant: scheme.noteColor,
