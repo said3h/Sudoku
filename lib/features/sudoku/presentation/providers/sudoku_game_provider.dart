@@ -163,6 +163,7 @@ class SudokuGameNotifier extends StateNotifier<SudokuGameState> {
   final GameSessionConfig config;
   final Ref settingsRef;
   final List<_GameSnapshot> _history = [];
+  static const int _maxHistorySize = 100;
 
   static SudokuGameState _initialize(GameSessionConfig config) {
     if (config.resumeSavedGame) {
@@ -376,6 +377,9 @@ class SudokuGameNotifier extends StateNotifier<SudokuGameState> {
   }
 
   void _pushHistory() {
+    if (_history.length >= _maxHistorySize) {
+      _history.removeAt(0);
+    }
     _history.add(
       _GameSnapshot(
         board: state.currentBoard.clone(),

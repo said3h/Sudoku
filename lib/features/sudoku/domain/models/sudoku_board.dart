@@ -31,7 +31,8 @@ extension BoardExtension on SudokuBoard {
     final boxCol = (col ~/ 3) * 3;
     for (int r = boxRow; r < boxRow + 3; r++) {
       for (int c = boxCol; c < boxCol + 3; c++) {
-        if (r != row && c != col && this[r][c] == value) return false;
+        if (r == row && c == col) continue;
+        if (this[r][c] == value) return false;
       }
     }
     return true;

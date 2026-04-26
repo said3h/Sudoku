@@ -108,8 +108,9 @@ class _NumberButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.appColors.colors;
     final brightness = Theme.of(context).brightness;
-    final numberColor =
-        brightness == Brightness.dark ? c.accentLight : c.textPrimary;
+    final numberColor = brightness == Brightness.dark
+        ? c.accentBlue
+        : c.textPrimary;
 
     return Material(
       color: Colors.transparent,
@@ -121,14 +122,18 @@ class _NumberButton extends StatelessWidget {
           decoration: BoxDecoration(
             color: c.surfaceLight,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: c.surfaceBorder),
+            border: Border.all(
+              color: c.surfaceBorder.withOpacity(0.8),
+              width: 1.2,
+            ),
           ),
           child: Center(
             child: Text(
               '$number',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     color: numberColor,
-                    fontWeight: FontWeight.w900,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 26,
                   ),
             ),
           ),
