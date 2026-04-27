@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/providers/app_settings_provider.dart';
+import '../../data/models/daily_challenge_result.dart';
 import '../../data/models/saved_sudoku_game.dart';
 import '../../data/sudoku_game_storage.dart';
 import '../../domain/models/game_result.dart';
@@ -444,24 +445,35 @@ class SudokuGameNotifier extends StateNotifier<SudokuGameState> {
   }) {
     final wasComplete = state.isComplete;
     final isComplete = SudokuValidator.isBoardSolved(newBoard);
+    final finalErrorCount = errorCount ?? state.errorCount;
+    final finalHasUsedHint = hasUsedHint ?? state.hasUsedHint;
     state = state.copyWith(
       currentBoard: newBoard,
       notes: notes,
       mistakes: mistakes,
-      errorCount: errorCount,
-      hasUsedHint: hasUsedHint,
+      errorCount: finalErrorCount,
+      hasUsedHint: finalHasUsedHint,
       isComplete: isComplete,
-      gameResult: isComplete ? _buildGameResult() : null,
+      gameResult: isComplete
+          ? _buildGameResult(
+              errorCount: finalErrorCount,
+              hasUsedHint: finalHasUsedHint,
+            )
+          : null,
     );
 
     _syncPersistence(previouslyComplete: wasComplete);
   }
 
-  GameResult _buildGameResult() {
+  GameResult _buildGameResult({
+    required int errorCount,
+    required bool hasUsedHint,
+  }) {
     return GameResult(
       elapsedTime: state.elapsed,
-      errorCount: state.errorCount,
+      errorCount: errorCount,
       hasUsedNotes: state.hasUsedNotes,
+      hasUsedHint: hasUsedHint,
       gameMode: state.gameMode,
       seed: config.seed,
       isValidRun: state.isValidRun,
@@ -478,6 +490,7 @@ class SudokuGameNotifier extends StateNotifier<SudokuGameState> {
         gameMode: state.gameMode,
         completedDayKey: completionDay,
       );
+      _saveDailyResultIfNeeded(completedAt: DateTime.now());
       SudokuGameStorage.clearSavedGame();
       return;
     }
@@ -485,6 +498,24 @@ class SudokuGameNotifier extends StateNotifier<SudokuGameState> {
     if (!state.isComplete) {
       _persistProgress();
     }
+  }
+
+  void _saveDailyResultIfNeeded({required DateTime completedAt}) {
+    final dailyChallengeKey = state.dailyChallengeKey;
+    final gameResult = state.gameResult;
+    if (state.gameMode != GameMode.daily ||
+        dailyChallengeKey == null ||
+        gameResult == null) {
+      return;
+    }
+
+    SudokuGameStorage.saveDailyResult(
+      DailyChallengeResult.fromGameResult(
+        dailyChallengeKey: dailyChallengeKey,
+        gameResult: gameResult,
+        completedAt: completedAt,
+      ),
+    );
   }
 
   void _persistProgress() {

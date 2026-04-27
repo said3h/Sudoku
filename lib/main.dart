@@ -23,6 +23,7 @@ Future<void> main() async {
   await Hive.openBox(AppConstants.hiveBoxSettings);
   await Hive.openBox(AppConstants.hiveBoxStats);
   await Hive.openBox(AppConstants.hiveBoxCurrentGame);
+  await Hive.openBox(AppConstants.hiveBoxDailyResults);
 
   runApp(
     const ProviderScope(

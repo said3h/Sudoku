@@ -9,6 +9,7 @@ class AppConstants {
   static const String hiveBoxSettings = 'settings';
   static const String hiveBoxStats = 'statistics';
   static const String hiveBoxCurrentGame = 'current_game';
+  static const String hiveBoxDailyResults = 'daily_results';
 
   // Routes
   static const String routeHome = '/';

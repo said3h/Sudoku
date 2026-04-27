@@ -5,6 +5,7 @@ class GameResult {
     required this.elapsedTime,
     required this.errorCount,
     required this.hasUsedNotes,
+    required this.hasUsedHint,
     required this.gameMode,
     required this.seed,
     required this.isValidRun,
@@ -13,6 +14,7 @@ class GameResult {
   final Duration elapsedTime;
   final int errorCount;
   final bool hasUsedNotes;
+  final bool hasUsedHint;
   final GameMode gameMode;
   final int? seed;
   final bool isValidRun;

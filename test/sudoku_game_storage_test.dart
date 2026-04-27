@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hive/hive.dart';
 import 'package:sudoku_app/core/constants/app_constants.dart';
+import 'package:sudoku_app/features/sudoku/data/models/daily_challenge_result.dart';
 import 'package:sudoku_app/features/sudoku/data/models/saved_sudoku_game.dart';
 import 'package:sudoku_app/features/sudoku/data/sudoku_game_storage.dart';
 import 'package:sudoku_app/features/sudoku/domain/models/game_mode.dart';
@@ -19,12 +20,14 @@ void main() {
     await Hive.openBox(AppConstants.hiveBoxSettings);
     await Hive.openBox(AppConstants.hiveBoxStats);
     await Hive.openBox(AppConstants.hiveBoxCurrentGame);
+    await Hive.openBox(AppConstants.hiveBoxDailyResults);
   });
 
   tearDown(() async {
     await Hive.box(AppConstants.hiveBoxSettings).clear();
     await Hive.box(AppConstants.hiveBoxStats).clear();
     await Hive.box(AppConstants.hiveBoxCurrentGame).clear();
+    await Hive.box(AppConstants.hiveBoxDailyResults).clear();
   });
 
   tearDownAll(() async {
@@ -101,6 +104,39 @@ void main() {
     expect(stats.currentStreak, 2);
     expect(stats.bestStreak, 2);
     expect(stats.totalMistakes, 1);
+  });
+
+  test('daily results are saved once per daily challenge key', () {
+    const dailyKey = '2026-04-27';
+    final firstResult = DailyChallengeResult(
+      dailyChallengeKey: dailyKey,
+      elapsedTime: const Duration(minutes: 5),
+      errorCount: 1,
+      hasUsedNotes: true,
+      hasUsedHint: false,
+      seed: 123,
+      isValidRun: true,
+      completedAt: DateTime(2026, 4, 27, 10),
+    );
+    final duplicateResult = DailyChallengeResult(
+      dailyChallengeKey: dailyKey,
+      elapsedTime: const Duration(minutes: 4),
+      errorCount: 0,
+      hasUsedNotes: false,
+      hasUsedHint: false,
+      seed: 123,
+      isValidRun: true,
+      completedAt: DateTime(2026, 4, 27, 11),
+    );
+
+    expect(SudokuGameStorage.saveDailyResult(firstResult), isTrue);
+    expect(SudokuGameStorage.saveDailyResult(duplicateResult), isFalse);
+
+    final restored = SudokuGameStorage.loadDailyResult(dailyKey);
+    expect(restored, isNotNull);
+    expect(restored!.elapsedTime, const Duration(minutes: 5));
+    expect(restored.errorCount, 1);
+    expect(SudokuGameStorage.loadDailyResults(), hasLength(1));
   });
 }
 

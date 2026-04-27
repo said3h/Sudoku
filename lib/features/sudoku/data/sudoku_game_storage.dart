@@ -4,6 +4,7 @@ import 'package:hive_flutter/hive_flutter.dart';
 import '../../../core/constants/app_constants.dart';
 import '../../../core/constants/difficulty.dart';
 import '../domain/models/game_mode.dart';
+import 'models/daily_challenge_result.dart';
 import 'models/saved_sudoku_game.dart';
 import 'models/sudoku_stats.dart';
 
@@ -15,6 +16,7 @@ class SudokuGameStorage {
 
   static Box get _currentGameBox => Hive.box(AppConstants.hiveBoxCurrentGame);
   static Box get _statsBox => Hive.box(AppConstants.hiveBoxStats);
+  static Box get _dailyResultsBox => Hive.box(AppConstants.hiveBoxDailyResults);
 
   static ValueListenable<Box> currentGameListenable() {
     return _currentGameBox.listenable(keys: [currentGameKey]);
@@ -42,6 +44,36 @@ class SudokuGameStorage {
   static Future<void> flush() async {
     await _currentGameBox.flush();
     await _statsBox.flush();
+    await _dailyResultsBox.flush();
+  }
+
+  static List<DailyChallengeResult> loadDailyResults() {
+    return _dailyResultsBox.values
+        .whereType<Map>()
+        .map(DailyChallengeResult.fromMap)
+        .where((result) => result.dailyChallengeKey.isNotEmpty)
+        .toList()
+      ..sort((a, b) => b.completedAt.compareTo(a.completedAt));
+  }
+
+  static DailyChallengeResult? loadDailyResult(String dailyChallengeKey) {
+    final raw = _dailyResultsBox.get(dailyChallengeKey);
+    if (raw is! Map) return null;
+
+    return DailyChallengeResult.fromMap(raw);
+  }
+
+  static bool hasDailyResult(String dailyChallengeKey) {
+    return _dailyResultsBox.containsKey(dailyChallengeKey);
+  }
+
+  static bool saveDailyResult(DailyChallengeResult result) {
+    if (_dailyResultsBox.containsKey(result.dailyChallengeKey)) {
+      return false;
+    }
+
+    _dailyResultsBox.put(result.dailyChallengeKey, result.toMap());
+    return true;
   }
 
   static SudokuStats loadStats() {
