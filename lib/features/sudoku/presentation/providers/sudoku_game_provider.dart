@@ -320,13 +320,15 @@ class SudokuGameNotifier extends StateNotifier<SudokuGameState> {
   }
 
   void resetGame() {
+    if (config.gameMode == GameMode.daily) {
+      return;
+    }
+
     _history.clear();
-    final isDaily = config.gameMode == GameMode.daily;
-    final newSeed = isDaily ? config.seed : Random().nextInt(2147483647);
     state = _createNewGame(
       config.copyWith(
         isZenMode: settingsRef.read(appSettingsProvider).zenModeEnabled,
-        seed: newSeed,
+        seed: Random().nextInt(2147483647),
       ),
     );
     SudokuGameStorage.recordGameStarted();

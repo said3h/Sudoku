@@ -8,12 +8,12 @@ class GameHeader extends StatelessWidget {
     super.key,
     required this.gameState,
     required this.onBack,
-    required this.onRestart,
+    this.onRestart,
   });
 
   final SudokuGameState gameState;
   final VoidCallback onBack;
-  final VoidCallback onRestart;
+  final VoidCallback? onRestart;
 
   @override
   Widget build(BuildContext context) {
@@ -59,10 +59,11 @@ class GameHeader extends StatelessWidget {
                   ],
                 ),
               ),
-              _CircleButton(
-                icon: Icons.refresh_rounded,
-                onTap: onRestart,
-              ),
+              if (!gameState.isDailyChallenge && onRestart != null)
+                _CircleButton(
+                  icon: Icons.refresh_rounded,
+                  onTap: onRestart!,
+                ),
             ],
           ),
           const SizedBox(height: 16),

@@ -53,7 +53,9 @@ class GameScreen extends ConsumerWidget {
             GameHeader(
               gameState: gameState,
               onBack: context.pop,
-              onRestart: () => _showRestartDialog(context, notifier),
+              onRestart: gameState.isDailyChallenge
+                  ? null
+                  : () => _showRestartDialog(context, notifier),
             ),
             Expanded(
               child: Column(
