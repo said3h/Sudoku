@@ -138,6 +138,38 @@ void main() {
     expect(restored.errorCount, 1);
     expect(SudokuGameStorage.loadDailyResults(), hasLength(1));
   });
+
+  test('daily results history is sorted by completion date descending', () {
+    final olderResult = DailyChallengeResult(
+      dailyChallengeKey: '2026-04-26',
+      elapsedTime: const Duration(minutes: 6),
+      errorCount: 2,
+      hasUsedNotes: false,
+      hasUsedHint: false,
+      seed: 122,
+      isValidRun: true,
+      completedAt: DateTime(2026, 4, 26, 21),
+    );
+    final newerResult = DailyChallengeResult(
+      dailyChallengeKey: '2026-04-27',
+      elapsedTime: const Duration(minutes: 4),
+      errorCount: 0,
+      hasUsedNotes: true,
+      hasUsedHint: false,
+      seed: 123,
+      isValidRun: true,
+      completedAt: DateTime(2026, 4, 27, 9),
+    );
+
+    expect(SudokuGameStorage.saveDailyResult(olderResult), isTrue);
+    expect(SudokuGameStorage.saveDailyResult(newerResult), isTrue);
+
+    final history = SudokuGameStorage.loadDailyResults();
+    expect(history.map((result) => result.dailyChallengeKey), [
+      '2026-04-27',
+      '2026-04-26',
+    ]);
+  });
 }
 
 SudokuBoard _emptyBoard() {

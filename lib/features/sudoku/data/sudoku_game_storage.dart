@@ -87,6 +87,10 @@ class SudokuGameStorage {
     return _statsBox.listenable(keys: [statsKey]);
   }
 
+  static ValueListenable<Box> dailyResultsListenable() {
+    return _dailyResultsBox.listenable();
+  }
+
   static void recordGameStarted() {
     final stats = loadStats();
     _statsBox.put(

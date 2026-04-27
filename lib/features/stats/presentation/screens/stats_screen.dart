@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/constants/difficulty.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../sudoku/data/models/daily_challenge_result.dart';
 import '../../../sudoku/data/models/sudoku_stats.dart';
 import '../../../sudoku/data/sudoku_game_storage.dart';
 
@@ -24,117 +25,369 @@ class StatsScreen extends StatelessWidget {
           final todayKey = DateTime.now().toIso8601String().split('T').first;
           final isDailyCompleted = stats.lastCompletedDayKey == todayKey;
 
-          return ListView(
-            padding: const EdgeInsets.all(20),
-            children: [
-              Container(
-                padding: const EdgeInsets.all(22),
-                decoration: BoxDecoration(
-                  gradient: c.heroGradient,
-                  borderRadius: BorderRadius.circular(28),
-                  border: Border.all(color: c.surfaceBorder),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Rendimiento premium',
-                      style: Theme.of(context).textTheme.displaySmall,
+          return ValueListenableBuilder(
+            valueListenable: SudokuGameStorage.dailyResultsListenable(),
+            builder: (context, _, __) {
+              final dailyResults = SudokuGameStorage.loadDailyResults();
+              final todaysResults = dailyResults
+                  .where((result) => result.dailyChallengeKey == todayKey)
+                  .toList();
+              final todaysBestResult = _bestDailyResult(todaysResults);
+              final recentDailyResults = dailyResults.take(5).toList();
+
+              return ListView(
+                padding: const EdgeInsets.all(20),
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(22),
+                    decoration: BoxDecoration(
+                      gradient: c.heroGradient,
+                      borderRadius: BorderRadius.circular(28),
+                      border: Border.all(color: c.surfaceBorder),
                     ),
-                    const SizedBox(height: 10),
-                    Text(
-                      'Seguimiento real de progreso, constancia y mejores tiempos.',
-                      style: Theme.of(context).textTheme.bodyMedium,
-                    ),
-                    const SizedBox(height: 18),
-                    Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: _HeroStat(
-                            label: 'Racha',
-                            sublabel: 'días seguidos',
-                            value: '${stats.currentStreak}',
-                            accent: c.accent,
-                            icon: '🔥',
-                          ),
+                        Text(
+                          'Rendimiento premium',
+                          style: Theme.of(context).textTheme.displaySmall,
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _HeroStat(
-                            label: 'Mejor racha',
-                            value: '${stats.bestStreak}',
-                            accent: c.accentBlue,
-                            icon: '⚡',
-                          ),
+                        const SizedBox(height: 10),
+                        Text(
+                          'Seguimiento real de progreso, constancia y mejores tiempos.',
+                          style: Theme.of(context).textTheme.bodyMedium,
                         ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _HeroStat(
-                            label: 'Completados',
-                            value: '${stats.dailyChallengesCompleted}',
-                            accent: c.success,
-                            icon: '🎯',
-                          ),
+                        const SizedBox(height: 18),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _HeroStat(
+                                label: 'Racha',
+                                sublabel: 'días seguidos',
+                                value: '${stats.currentStreak}',
+                                accent: c.accent,
+                                icon: '🔥',
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _HeroStat(
+                                label: 'Mejor racha',
+                                value: '${stats.bestStreak}',
+                                accent: c.accentBlue,
+                                icon: '⚡',
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _HeroStat(
+                                label: 'Completados',
+                                value: '${stats.dailyChallengesCompleted}',
+                                accent: c.success,
+                                icon: '🎯',
+                              ),
+                            ),
+                          ],
                         ),
+                        if (!isDailyCompleted) ...[
+                          const SizedBox(height: 16),
+                          _StreakReminder(),
+                        ],
                       ],
                     ),
-                    if (!isDailyCompleted) ...[
-                      const SizedBox(height: 16),
-                      _StreakReminder(),
+                  ),
+                  const SizedBox(height: 18),
+                  _DailyHistorySection(
+                    todayKey: todayKey,
+                    todaysBestResult: todaysBestResult,
+                    recentResults: recentDailyResults,
+                  ),
+                  const SizedBox(height: 18),
+                  GridView.count(
+                    crossAxisCount: 2,
+                    childAspectRatio: 1.25,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    physics: const NeverScrollableScrollPhysics(),
+                    shrinkWrap: true,
+                    children: [
+                      _MetricCard(
+                        label: 'Iniciadas',
+                        value: '${stats.gamesStarted}',
+                        icon: Icons.play_circle_outline_rounded,
+                        accent: c.accentBlue,
+                      ),
+                      _MetricCard(
+                        label: 'Completadas',
+                        value: '${stats.gamesCompleted}',
+                        icon: Icons.emoji_events_outlined,
+                        accent: c.accent,
+                      ),
+                      _MetricCard(
+                        label: 'Errores',
+                        value: '${stats.totalMistakes}',
+                        icon: Icons.auto_fix_normal_outlined,
+                        accent: c.error,
+                      ),
+                      _MetricCard(
+                        label: 'Exito',
+                        value: '$completionRate%',
+                        icon: Icons.trending_up_rounded,
+                        accent: c.success,
+                      ),
                     ],
-                  ],
-                ),
-              ),
-              const SizedBox(height: 18),
-              GridView.count(
-                crossAxisCount: 2,
-                childAspectRatio: 1.25,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                physics: const NeverScrollableScrollPhysics(),
-                shrinkWrap: true,
-                children: [
-                  _MetricCard(
-                    label: 'Iniciadas',
-                    value: '${stats.gamesStarted}',
-                    icon: Icons.play_circle_outline_rounded,
-                    accent: c.accentBlue,
                   ),
-                  _MetricCard(
-                    label: 'Completadas',
-                    value: '${stats.gamesCompleted}',
-                    icon: Icons.emoji_events_outlined,
-                    accent: c.accent,
+                  const SizedBox(height: 24),
+                  Text(
+                    'Mejores tiempos',
+                    style: Theme.of(context).textTheme.titleLarge,
                   ),
-                  _MetricCard(
-                    label: 'Errores',
-                    value: '${stats.totalMistakes}',
-                    icon: Icons.auto_fix_normal_outlined,
-                    accent: c.error,
-                  ),
-                  _MetricCard(
-                    label: 'Exito',
-                    value: '$completionRate%',
-                    icon: Icons.trending_up_rounded,
-                    accent: c.success,
-                  ),
+                  const SizedBox(height: 12),
+                  ...Difficulty.values.map((difficulty) {
+                    return _BestTimeTile(
+                      difficulty: difficulty,
+                      stats: stats,
+                    );
+                  }),
                 ],
-              ),
-              const SizedBox(height: 24),
-              Text(
-                'Mejores tiempos',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 12),
-              ...Difficulty.values.map((difficulty) {
-                return _BestTimeTile(
-                  difficulty: difficulty,
-                  stats: stats,
-                );
-              }),
-            ],
+              );
+            },
           );
         },
+      ),
+    );
+  }
+
+  DailyChallengeResult? _bestDailyResult(
+    List<DailyChallengeResult> results,
+  ) {
+    if (results.isEmpty) return null;
+
+    return results.reduce(
+      (best, current) =>
+          current.elapsedTime < best.elapsedTime ? current : best,
+    );
+  }
+}
+
+String _formatDuration(Duration duration) {
+  final minutes = duration.inMinutes.toString().padLeft(2, '0');
+  final seconds = (duration.inSeconds % 60).toString().padLeft(2, '0');
+  return '$minutes:$seconds';
+}
+
+class _DailyHistorySection extends StatelessWidget {
+  const _DailyHistorySection({
+    required this.todayKey,
+    required this.todaysBestResult,
+    required this.recentResults,
+  });
+
+  final String todayKey;
+  final DailyChallengeResult? todaysBestResult;
+  final List<DailyChallengeResult> recentResults;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.appColors.colors;
+    final hasTodayResult = todaysBestResult != null;
+
+    return Container(
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: c.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: c.surfaceBorder),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.today_rounded, color: c.accentBlueLight, size: 22),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Daily Challenge',
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+              ),
+              _ValidityBadge(isValid: todaysBestResult?.isValidRun),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: _DailyMetric(
+                  label: 'Mejor hoy',
+                  value: hasTodayResult
+                      ? _formatDuration(todaysBestResult!.elapsedTime)
+                      : '--:--',
+                  accent: c.accentBlueLight,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _DailyMetric(
+                  label: 'Errores',
+                  value:
+                      hasTodayResult ? '${todaysBestResult!.errorCount}' : '--',
+                  accent: c.error,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            hasTodayResult
+                ? 'Resultado guardado para $todayKey'
+                : 'Todavia no hay resultado guardado para $todayKey',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: c.textSecondary,
+                ),
+          ),
+          if (recentResults.isNotEmpty) ...[
+            const SizedBox(height: 18),
+            Text(
+              'Ultimos dailies',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            const SizedBox(height: 10),
+            ...recentResults.map((result) => _DailyResultTile(result: result)),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _DailyMetric extends StatelessWidget {
+  const _DailyMetric({
+    required this.label,
+    required this.value,
+    required this.accent,
+  });
+
+  final String label;
+  final String value;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.appColors.colors;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: accent.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: accent.withOpacity(0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label.toUpperCase(),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: c.textMuted,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 0.8,
+                ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: accent,
+                  fontWeight: FontWeight.w800,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DailyResultTile extends StatelessWidget {
+  const _DailyResultTile({required this.result});
+
+  final DailyChallengeResult result;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.appColors.colors;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      decoration: BoxDecoration(
+        color: c.background.withOpacity(0.35),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: c.surfaceBorder),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              result.dailyChallengeKey,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+          ),
+          Text(
+            _formatDuration(result.elapsedTime),
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: c.accentBlueLight,
+                ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            '${result.errorCount} err.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: c.textSecondary,
+                ),
+          ),
+          const SizedBox(width: 10),
+          Icon(
+            result.isValidRun
+                ? Icons.verified_rounded
+                : Icons.warning_amber_rounded,
+            color: result.isValidRun ? c.success : c.error,
+            size: 18,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ValidityBadge extends StatelessWidget {
+  const _ValidityBadge({required this.isValid});
+
+  final bool? isValid;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.appColors.colors;
+    final label =
+        isValid == null ? 'Pendiente' : (isValid! ? 'Valido' : 'No valido');
+    final color =
+        isValid == null ? c.textMuted : (isValid! ? c.success : c.error);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withOpacity(0.25)),
+      ),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: color,
+              fontWeight: FontWeight.w700,
+            ),
       ),
     );
   }
@@ -357,11 +610,5 @@ class _BestTimeTile extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  String _formatDuration(Duration duration) {
-    final minutes = duration.inMinutes.toString().padLeft(2, '0');
-    final seconds = (duration.inSeconds % 60).toString().padLeft(2, '0');
-    return '$minutes:$seconds';
   }
 }
