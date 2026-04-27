@@ -1,9 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../domain/models/sudoku_board.dart';
 
-class SudokuBoardWidget extends StatelessWidget {
+class SudokuBoardWidget extends StatefulWidget {
   const SudokuBoardWidget({
     super.key,
     required this.currentBoard,
@@ -22,6 +24,58 @@ class SudokuBoardWidget extends StatelessWidget {
   final Map<(int, int), Set<int>> notes;
   final bool isZenMode;
   final void Function(int row, int col) onCellTap;
+
+  @override
+  State<SudokuBoardWidget> createState() => _SudokuBoardWidgetState();
+}
+
+class _SudokuBoardWidgetState extends State<SudokuBoardWidget> {
+  Timer? _completionTimer;
+  Set<(int, int)> _changedCells = {};
+  Set<_CompletedUnit> _completedUnits = {};
+
+  @override
+  void didUpdateWidget(covariant SudokuBoardWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    final changedCells = <(int, int)>{};
+    for (var row = 0; row < 9; row++) {
+      for (var col = 0; col < 9; col++) {
+        if (oldWidget.currentBoard[row][col] != widget.currentBoard[row][col]) {
+          changedCells.add((row, col));
+        }
+      }
+    }
+
+    if (changedCells.isEmpty) return;
+
+    final completedUnits = _newlyCompletedUnits(
+      oldBoard: oldWidget.currentBoard,
+      currentBoard: widget.currentBoard,
+      solution: widget.solution,
+      changedCells: changedCells,
+    );
+
+    setState(() {
+      _changedCells = changedCells;
+      _completedUnits = completedUnits;
+    });
+
+    _completionTimer?.cancel();
+    _completionTimer = Timer(const Duration(milliseconds: 720), () {
+      if (!mounted) return;
+      setState(() {
+        _changedCells = {};
+        _completedUnits = {};
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _completionTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,7 +117,8 @@ class SudokuBoardWidget extends StatelessWidget {
                       children: List.generate(3, (blockRow) {
                         return Expanded(
                           child: Padding(
-                            padding: EdgeInsets.only(bottom: blockRow == 2 ? 0 : 8),
+                            padding:
+                                EdgeInsets.only(bottom: blockRow == 2 ? 0 : 8),
                             child: Row(
                               children: List.generate(3, (blockCol) {
                                 return Expanded(
@@ -75,12 +130,15 @@ class SudokuBoardWidget extends StatelessWidget {
                                       palette: palette,
                                       blockRow: blockRow,
                                       blockCol: blockCol,
-                                      currentBoard: currentBoard,
-                                      givenCells: givenCells,
-                                      selectedCell: selectedCell,
-                                      notes: notes,
-                                      isZenMode: isZenMode,
-                                      onCellTap: onCellTap,
+                                      currentBoard: widget.currentBoard,
+                                      givenCells: widget.givenCells,
+                                      selectedCell: widget.selectedCell,
+                                      solution: widget.solution,
+                                      notes: widget.notes,
+                                      isZenMode: widget.isZenMode,
+                                      changedCells: _changedCells,
+                                      completedUnits: _completedUnits,
+                                      onCellTap: widget.onCellTap,
                                     ),
                                   ),
                                 );
@@ -99,6 +157,67 @@ class SudokuBoardWidget extends StatelessWidget {
       ),
     );
   }
+
+  Set<_CompletedUnit> _newlyCompletedUnits({
+    required SudokuBoard oldBoard,
+    required SudokuBoard currentBoard,
+    required SudokuBoard solution,
+    required Set<(int, int)> changedCells,
+  }) {
+    final units = <_CompletedUnit>{};
+
+    for (final cell in changedCells) {
+      final row = cell.$1;
+      final col = cell.$2;
+      final block = (row ~/ 3) * 3 + (col ~/ 3);
+
+      if (!_isRowComplete(oldBoard, solution, row) &&
+          _isRowComplete(currentBoard, solution, row)) {
+        units.add(_CompletedUnit.row(row));
+      }
+      if (!_isColumnComplete(oldBoard, solution, col) &&
+          _isColumnComplete(currentBoard, solution, col)) {
+        units.add(_CompletedUnit.column(col));
+      }
+      if (!_isBlockComplete(oldBoard, solution, block) &&
+          _isBlockComplete(currentBoard, solution, block)) {
+        units.add(_CompletedUnit.block(block));
+      }
+    }
+
+    return units;
+  }
+
+  bool _isRowComplete(SudokuBoard board, SudokuBoard solution, int row) {
+    for (var col = 0; col < 9; col++) {
+      if (board[row][col] == null || board[row][col] != solution[row][col]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  bool _isColumnComplete(SudokuBoard board, SudokuBoard solution, int col) {
+    for (var row = 0; row < 9; row++) {
+      if (board[row][col] == null || board[row][col] != solution[row][col]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  bool _isBlockComplete(SudokuBoard board, SudokuBoard solution, int block) {
+    final blockRow = (block ~/ 3) * 3;
+    final blockCol = (block % 3) * 3;
+    for (var row = blockRow; row < blockRow + 3; row++) {
+      for (var col = blockCol; col < blockCol + 3; col++) {
+        if (board[row][col] == null || board[row][col] != solution[row][col]) {
+          return false;
+        }
+      }
+    }
+    return true;
+  }
 }
 
 class _Block extends StatelessWidget {
@@ -109,8 +228,11 @@ class _Block extends StatelessWidget {
     required this.currentBoard,
     required this.givenCells,
     required this.selectedCell,
+    required this.solution,
     required this.notes,
     required this.isZenMode,
+    required this.changedCells,
+    required this.completedUnits,
     required this.onCellTap,
   });
 
@@ -120,8 +242,11 @@ class _Block extends StatelessWidget {
   final SudokuBoard currentBoard;
   final Set<(int, int)> givenCells;
   final (int, int)? selectedCell;
+  final SudokuBoard solution;
   final Map<(int, int), Set<int>> notes;
   final bool isZenMode;
+  final Set<(int, int)> changedCells;
+  final Set<_CompletedUnit> completedUnits;
   final void Function(int row, int col) onCellTap;
 
   @override
@@ -155,8 +280,11 @@ class _Block extends StatelessWidget {
                         currentBoard: currentBoard,
                         givenCells: givenCells,
                         selectedCell: selectedCell,
+                        solution: solution,
                         notes: notes,
                         isZenMode: isZenMode,
+                        wasJustChanged: changedCells.contains((row, col)),
+                        hasCompletionGlow: _hasCompletionGlow(row, col),
                         onTap: () => onCellTap(row, col),
                       ),
                     ),
@@ -169,6 +297,13 @@ class _Block extends StatelessWidget {
       ),
     );
   }
+
+  bool _hasCompletionGlow(int row, int col) {
+    final block = (row ~/ 3) * 3 + (col ~/ 3);
+    return completedUnits.contains(_CompletedUnit.row(row)) ||
+        completedUnits.contains(_CompletedUnit.column(col)) ||
+        completedUnits.contains(_CompletedUnit.block(block));
+  }
 }
 
 class _BoardCell extends StatelessWidget {
@@ -179,8 +314,11 @@ class _BoardCell extends StatelessWidget {
     required this.currentBoard,
     required this.givenCells,
     required this.selectedCell,
+    required this.solution,
     required this.notes,
     required this.isZenMode,
+    required this.wasJustChanged,
+    required this.hasCompletionGlow,
     required this.onTap,
   });
 
@@ -190,8 +328,11 @@ class _BoardCell extends StatelessWidget {
   final SudokuBoard currentBoard;
   final Set<(int, int)> givenCells;
   final (int, int)? selectedCell;
+  final SudokuBoard solution;
   final Map<(int, int), Set<int>> notes;
   final bool isZenMode;
+  final bool wasJustChanged;
+  final bool hasCompletionGlow;
   final VoidCallback onTap;
 
   @override
@@ -201,11 +342,15 @@ class _BoardCell extends StatelessWidget {
     final isSelected = selectedCell == (row, col);
     final isPeer = _isPeer();
     final isMatched = _isMatchedValue();
-    final hasConflict = !isGiven && !isZenMode && value != null && _hasConflict(value);
+    final hasConflict =
+        !isGiven && !isZenMode && value != null && _hasConflict(value);
     final cellNotes = notes[(row, col)];
 
     Color background = palette.cellBackground;
     Color foreground = isGiven ? palette.onSurface : palette.primary;
+    Color borderColor = palette.onSurfaceVariant.withOpacity(0.92);
+    double borderWidth = 0.65;
+    List<BoxShadow>? boxShadow;
 
     if (isPeer) {
       background = palette.cellPeer;
@@ -219,14 +364,47 @@ class _BoardCell extends StatelessWidget {
     if (hasConflict) {
       background = palette.errorSoft;
       foreground = palette.error;
+      borderColor = palette.error.withOpacity(0.42);
+      borderWidth = 1.05;
+      boxShadow = [
+        BoxShadow(
+          color: palette.error.withOpacity(0.12),
+          blurRadius: 12,
+          spreadRadius: -2,
+        ),
+      ];
+    }
+    if (hasCompletionGlow && !hasConflict) {
+      background = palette.successSoft;
+      foreground = isGiven ? palette.onSurface : palette.success;
+      borderColor = palette.success.withOpacity(0.42);
+      boxShadow = [
+        BoxShadow(
+          color: palette.success.withOpacity(0.16),
+          blurRadius: 18,
+          spreadRadius: -3,
+        ),
+      ];
     }
     if (isSelected) {
       background = palette.cellSelected;
       foreground = hasConflict ? palette.error : palette.primary;
+      borderColor = palette.primary;
+      borderWidth = 2;
+      boxShadow = [
+        BoxShadow(
+          color: palette.primary.withOpacity(0.30),
+          blurRadius: 15,
+          spreadRadius: 0,
+        ),
+      ];
     }
 
     return TweenAnimationBuilder<double>(
-      tween: Tween<double>(begin: 0.98, end: isSelected ? 1 : 0.99),
+      tween: Tween<double>(
+        begin: wasJustChanged ? 1.08 : 0.98,
+        end: isSelected ? 1 : 0.99,
+      ),
       duration: const Duration(milliseconds: 180),
       curve: Curves.easeOutCubic,
       builder: (context, scale, child) {
@@ -242,20 +420,10 @@ class _BoardCell extends StatelessWidget {
             decoration: BoxDecoration(
               color: background,
               border: Border.all(
-                color: isSelected
-                    ? palette.primary
-                    : palette.onSurfaceVariant.withOpacity(0.92),
-                width: isSelected ? 2 : 0.65,
+                color: borderColor,
+                width: borderWidth,
               ),
-              boxShadow: isSelected
-                  ? [
-                      BoxShadow(
-                        color: palette.primary.withOpacity(0.30),
-                        blurRadius: 15,
-                        spreadRadius: 0,
-                      ),
-                    ]
-                  : null,
+              boxShadow: boxShadow,
             ),
             child: Center(
               child: value != null
@@ -265,7 +433,8 @@ class _BoardCell extends StatelessWidget {
                         return FadeTransition(
                           opacity: animation,
                           child: ScaleTransition(
-                            scale: Tween<double>(begin: 0.88, end: 1).animate(animation),
+                            scale: Tween<double>(begin: 0.88, end: 1)
+                                .animate(animation),
                             child: child,
                           ),
                         );
@@ -276,7 +445,11 @@ class _BoardCell extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 28,
                           height: 1,
-                          fontWeight: isGiven ? FontWeight.w600 : FontWeight.w300,
+                          fontWeight: isGiven
+                              ? FontWeight.w600
+                              : wasJustChanged
+                                  ? FontWeight.w500
+                                  : FontWeight.w300,
                           color: foreground,
                         ),
                       ),
@@ -377,6 +550,8 @@ class _BoardPalette {
     required this.onSurfaceVariant,
     required this.errorSoft,
     required this.error,
+    required this.successSoft,
+    required this.success,
     required this.shadow,
   });
 
@@ -392,12 +567,15 @@ class _BoardPalette {
   final Color onSurfaceVariant;
   final Color errorSoft;
   final Color error;
+  final Color successSoft;
+  final Color success;
   final Color shadow;
 
   factory _BoardPalette.fromScheme(AppColorScheme scheme) {
     return _BoardPalette(
       boardBackground: scheme.boardBackground,
-      blockBackground: scheme.surfaceLight, // Used for block container decoration
+      blockBackground:
+          scheme.surfaceLight, // Used for block container decoration
       cellBackground: scheme.cellBackground,
       cellSelected: scheme.cellSelected,
       cellPeer: scheme.cellPeer,
@@ -406,9 +584,35 @@ class _BoardPalette {
       secondary: scheme.accentLight,
       onSurface: scheme.givenNumber,
       onSurfaceVariant: scheme.noteColor,
-      errorSoft: scheme.cellConflictSoft,
-      error: scheme.cellConflict,
+      errorSoft: scheme.cellConflictSoft.withOpacity(0.72),
+      error: scheme.error,
+      successSoft: scheme.cellSuccess.withOpacity(0.16),
+      success: scheme.success,
       shadow: scheme.accent.withOpacity(0.20),
     );
   }
+}
+
+enum _CompletedUnitType { row, column, block }
+
+class _CompletedUnit {
+  const _CompletedUnit(this.type, this.index);
+
+  const _CompletedUnit.row(int index) : this(_CompletedUnitType.row, index);
+  const _CompletedUnit.column(int index)
+      : this(_CompletedUnitType.column, index);
+  const _CompletedUnit.block(int index) : this(_CompletedUnitType.block, index);
+
+  final _CompletedUnitType type;
+  final int index;
+
+  @override
+  bool operator ==(Object other) {
+    return other is _CompletedUnit &&
+        other.type == type &&
+        other.index == index;
+  }
+
+  @override
+  int get hashCode => Object.hash(type, index);
 }

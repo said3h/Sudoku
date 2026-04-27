@@ -161,7 +161,7 @@ class GameScreen extends ConsumerWidget {
       barrierDismissible: false,
       barrierLabel: 'victory',
       barrierColor: Colors.black.withOpacity(0.64),
-      transitionDuration: const Duration(milliseconds: 300),
+      transitionDuration: const Duration(milliseconds: 420),
       pageBuilder: (context, animation, secondaryAnimation) {
         return Center(
           child: Container(
@@ -264,13 +264,21 @@ class GameScreen extends ConsumerWidget {
         );
       },
       transitionBuilder: (context, animation, secondaryAnimation, child) {
+        final curved = CurvedAnimation(
+          parent: animation,
+          curve: Curves.easeOutCubic,
+        );
         return FadeTransition(
-          opacity: animation,
-          child: ScaleTransition(
-            scale: Tween<double>(begin: 0.94, end: 1).animate(
-              CurvedAnimation(parent: animation, curve: Curves.easeOutCubic),
+          opacity: curved,
+          child: SlideTransition(
+            position: Tween<Offset>(
+              begin: const Offset(0, 0.025),
+              end: Offset.zero,
+            ).animate(curved),
+            child: ScaleTransition(
+              scale: Tween<double>(begin: 0.96, end: 1).animate(curved),
+              child: child,
             ),
-            child: child,
           ),
         );
       },
