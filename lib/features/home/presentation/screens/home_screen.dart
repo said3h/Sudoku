@@ -98,10 +98,12 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   _AppHeader(
                     streak: stats.currentStreak,
                     level: _calculateLevel(stats.gamesCompleted),
+                    isDailyCompleted: isDailyCompleted,
                   ),
                   const SizedBox(height: 24),
                   _DailyChallengeHero(
                     isCompleted: isDailyCompleted,
+                    currentStreak: stats.currentStreak,
                     timeUntilMidnight: _timeUntilMidnight,
                     onTap: () {
                       context.push(
@@ -123,14 +125,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                         );
                       },
                     ).animate().fadeIn(delay: 100.ms).slideY(begin: 0.06),
-                  if (shouldShowResume)
-                    const SizedBox(height: 20),
+                  if (shouldShowResume) const SizedBox(height: 20),
                   _WeeklyProgress(stats: stats),
                   const SizedBox(height: 18),
                   _QuickStatsRow(stats: stats),
                   const SizedBox(height: 26),
                   _NewGameButton(
-                    onTap: () => _startNewGame(context, settings.zenModeEnabled),
+                    onTap: () =>
+                        _startNewGame(context, settings.zenModeEnabled),
                   ),
                   const SizedBox(height: 18),
                   _SecondaryActions(),
@@ -168,10 +170,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 }
 
 class _AppHeader extends StatelessWidget {
-  const _AppHeader({required this.streak, required this.level});
+  const _AppHeader({
+    required this.streak,
+    required this.level,
+    required this.isDailyCompleted,
+  });
 
   final int streak;
   final int level;
+  final bool isDailyCompleted;
 
   @override
   Widget build(BuildContext context) {
@@ -215,7 +222,10 @@ class _AppHeader extends StatelessWidget {
         ),
         _LevelBadge(level: level),
         const SizedBox(width: 8),
-        if (streak > 0) _StreakBadge(streak: streak),
+        _PremiumStreakBadge(
+          streak: streak,
+          isDailyCompleted: isDailyCompleted,
+        ),
       ],
     );
   }
@@ -258,6 +268,83 @@ class _LevelBadge extends StatelessWidget {
   }
 }
 
+class _PremiumStreakBadge extends StatelessWidget {
+  const _PremiumStreakBadge({
+    required this.streak,
+    required this.isDailyCompleted,
+  });
+
+  final int streak;
+  final bool isDailyCompleted;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.appColors.colors;
+    final isAtRisk = streak > 0 && !isDailyCompleted;
+    final accent = isDailyCompleted
+        ? c.success
+        : isAtRisk
+            ? c.warning
+            : c.accent;
+    final label = isDailyCompleted
+        ? 'Mantenida'
+        : isAtRisk
+            ? 'En riesgo'
+            : 'Completa hoy';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
+      decoration: BoxDecoration(
+        color: accent.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: accent.withOpacity(0.24)),
+        boxShadow: [
+          BoxShadow(
+            color: accent.withOpacity(0.08),
+            blurRadius: 18,
+            spreadRadius: -8,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.local_fire_department_rounded,
+                color: accent,
+                size: 15,
+              ),
+              const SizedBox(width: 5),
+              Text(
+                '$streak',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: accent,
+                      fontWeight: FontWeight.w900,
+                      height: 1,
+                    ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 2),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: accent,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w800,
+                  height: 1,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ignore: unused_element
 class _StreakBadge extends StatelessWidget {
   const _StreakBadge({required this.streak});
 
@@ -297,17 +384,24 @@ class _StreakBadge extends StatelessWidget {
 class _DailyChallengeHero extends StatelessWidget {
   const _DailyChallengeHero({
     required this.isCompleted,
+    required this.currentStreak,
     required this.timeUntilMidnight,
     required this.onTap,
   });
 
   final bool isCompleted;
+  final int currentStreak;
   final Duration timeUntilMidnight;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final c = context.appColors.colors;
+    final contextualMessage = isCompleted
+        ? 'Racha mantenida'
+        : currentStreak > 0
+            ? 'Completa el reto para mantener tu racha'
+            : 'Empieza tu racha hoy';
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -379,6 +473,14 @@ class _DailyChallengeHero extends StatelessWidget {
                               color: isCompleted
                                   ? c.success.withOpacity(0.8)
                                   : c.textSecondary,
+                            ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        contextualMessage,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: isCompleted ? c.success : c.accent,
+                              fontWeight: FontWeight.w800,
                             ),
                       ),
                     ],
@@ -482,6 +584,19 @@ class _WeeklyProgress extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = context.appColors.colors;
     final weekDays = _getWeekDays();
+    final todayKey = DateTime.now().toIso8601String().split('T').first;
+    final isDailyCompleted = stats.lastCompletedDayKey == todayKey;
+    final isAtRisk = stats.currentStreak > 0 && !isDailyCompleted;
+    final accent = isDailyCompleted
+        ? c.success
+        : isAtRisk
+            ? c.warning
+            : c.accent;
+    final status = isDailyCompleted
+        ? 'Reto completado'
+        : isAtRisk
+            ? 'Racha en riesgo'
+            : 'Racha activa';
 
     return Container(
       padding: const EdgeInsets.all(20),
@@ -505,10 +620,14 @@ class _WeeklyProgress extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: c.accent.withOpacity(0.12),
+                    color: accent.withOpacity(0.12),
                     shape: BoxShape.circle,
                   ),
-                  child: const Text('🔥', style: TextStyle(fontSize: 20)),
+                  child: Icon(
+                    Icons.local_fire_department_rounded,
+                    color: accent,
+                    size: 22,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -521,8 +640,11 @@ class _WeeklyProgress extends StatelessWidget {
                         children: [
                           Text(
                             '${stats.currentStreak}',
-                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                  color: c.accent,
+                            style: Theme.of(context)
+                                .textTheme
+                                .headlineMedium
+                                ?.copyWith(
+                                  color: accent,
                                   fontWeight: FontWeight.w900,
                                   fontSize: 28,
                                 ),
@@ -530,16 +652,17 @@ class _WeeklyProgress extends StatelessWidget {
                           const SizedBox(width: 6),
                           Text(
                             'DÍAS',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: c.accent,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 1.2,
-                                ),
+                            style:
+                                Theme.of(context).textTheme.bodySmall?.copyWith(
+                                      color: accent,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 1.2,
+                                    ),
                           ),
                         ],
                       ),
                       Text(
-                        'Racha actual activa',
+                        status,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: c.textMuted,
                             ),
@@ -565,7 +688,8 @@ class _WeeklyProgress extends StatelessWidget {
                     day['label'] as String,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: isToday ? c.accent : c.textMuted,
-                          fontWeight: isToday ? FontWeight.w700 : FontWeight.w500,
+                          fontWeight:
+                              isToday ? FontWeight.w700 : FontWeight.w500,
                           fontSize: 10,
                         ),
                   ),

@@ -202,6 +202,13 @@ class GameScreen extends ConsumerWidget {
                           color: c.textSecondary,
                         ),
                   ),
+                  if (state.isDailyChallenge) ...[
+                    const SizedBox(height: 12),
+                    _DailyStreakReward(
+                      streak: stats.currentStreak,
+                      isMaintained: isDailyStreak,
+                    ),
+                  ],
                   if (isNewRecord) ...[
                     const SizedBox(height: 12),
                     _NewRecordBadge(),
@@ -374,6 +381,57 @@ class _NewRecordBadge extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _DailyStreakReward extends StatelessWidget {
+  const _DailyStreakReward({
+    required this.streak,
+    required this.isMaintained,
+  });
+
+  final int streak;
+  final bool isMaintained;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.appColors.colors;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: c.success.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: c.success.withOpacity(0.25)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.local_fire_department_rounded,
+            color: c.success,
+            size: 16,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            isMaintained ? '+1 dia de racha' : 'Racha mantenida',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: c.success,
+                  fontWeight: FontWeight.w800,
+                ),
+          ),
+          if (streak > 0) ...[
+            const SizedBox(width: 6),
+            Text(
+              '$streak dias',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: c.textSecondary,
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+          ],
+        ],
+      ),
+    ).animate().fadeIn(delay: 120.ms).slideY(begin: 0.08);
   }
 }
 

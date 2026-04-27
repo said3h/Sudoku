@@ -38,7 +38,9 @@ class FeedbackService {
   Future<void> victorySpecial() async {
     final settings = _ref.read(appSettingsProvider);
     if (settings.hapticsEnabled) {
-      await HapticFeedback.mediumImpact();
+      await HapticFeedback.lightImpact();
+      await Future.delayed(const Duration(milliseconds: 80));
+      await HapticFeedback.selectionClick();
     }
     if (settings.soundEnabled) {
       await SystemSound.play(SystemSoundType.click);

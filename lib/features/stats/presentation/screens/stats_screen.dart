@@ -24,6 +24,7 @@ class StatsScreen extends StatelessWidget {
               : ((stats.gamesCompleted / stats.gamesStarted) * 100).round();
           final todayKey = DateTime.now().toIso8601String().split('T').first;
           final isDailyCompleted = stats.lastCompletedDayKey == todayKey;
+          final isStreakAtRisk = stats.currentStreak > 0 && !isDailyCompleted;
 
           return ValueListenableBuilder(
             valueListenable: SudokuGameStorage.dailyResultsListenable(),
@@ -88,6 +89,13 @@ class StatsScreen extends StatelessWidget {
                               ),
                             ),
                           ],
+                        ),
+                        const SizedBox(height: 14),
+                        _StreakStatusRibbon(
+                          currentStreak: stats.currentStreak,
+                          bestStreak: stats.bestStreak,
+                          isDailyCompleted: isDailyCompleted,
+                          isAtRisk: isStreakAtRisk,
                         ),
                         if (!isDailyCompleted) ...[
                           const SizedBox(height: 16),
@@ -471,6 +479,84 @@ class _HeroStat extends StatelessWidget {
                   ),
             ),
           ],
+        ],
+      ),
+    );
+  }
+}
+
+class _StreakStatusRibbon extends StatelessWidget {
+  const _StreakStatusRibbon({
+    required this.currentStreak,
+    required this.bestStreak,
+    required this.isDailyCompleted,
+    required this.isAtRisk,
+  });
+
+  final int currentStreak;
+  final int bestStreak;
+  final bool isDailyCompleted;
+  final bool isAtRisk;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.appColors.colors;
+    final accent = isDailyCompleted
+        ? c.success
+        : isAtRisk
+            ? c.warning
+            : c.accent;
+    final title = isDailyCompleted
+        ? 'Racha mantenida'
+        : isAtRisk
+            ? 'Completa hoy para no perderla'
+            : 'Empieza tu racha diaria';
+    final progress =
+        bestStreak == 0 ? 0.0 : (currentStreak / bestStreak).clamp(0.0, 1.0);
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: accent.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: accent.withOpacity(0.22)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.local_fire_department_rounded,
+                  color: accent, size: 18),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  title,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: accent,
+                        fontWeight: FontWeight.w800,
+                      ),
+                ),
+              ),
+              Text(
+                '$currentStreak / $bestStreak',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: c.textSecondary,
+                      fontWeight: FontWeight.w800,
+                    ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 6,
+              color: accent,
+              backgroundColor: c.surfaceLight,
+            ),
+          ),
         ],
       ),
     );
