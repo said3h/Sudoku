@@ -15,6 +15,10 @@ class SavedSudokuGame {
   final bool isComplete;
   final DateTime startTime;
   final int mistakes;
+  final int errorCount;
+  final bool hasUsedNotes;
+  final bool hasUsedHint;
+  final bool isValidRun;
 
   const SavedSudokuGame({
     required this.cluesCount,
@@ -30,6 +34,10 @@ class SavedSudokuGame {
     required this.isComplete,
     required this.startTime,
     required this.mistakes,
+    required this.errorCount,
+    required this.hasUsedNotes,
+    required this.hasUsedHint,
+    required this.isValidRun,
   });
 
   factory SavedSudokuGame.fromMap(Map<dynamic, dynamic> rawMap) {
@@ -57,6 +65,10 @@ class SavedSudokuGame {
         map['startTime'] as int? ?? DateTime.now().millisecondsSinceEpoch,
       ),
       mistakes: map['mistakes'] as int? ?? 0,
+      errorCount: map['errorCount'] as int? ?? map['mistakes'] as int? ?? 0,
+      hasUsedNotes: map['hasUsedNotes'] as bool? ?? false,
+      hasUsedHint: map['hasUsedHint'] as bool? ?? false,
+      isValidRun: map['isValidRun'] as bool? ?? true,
     );
   }
 
@@ -77,6 +89,10 @@ class SavedSudokuGame {
       'isComplete': isComplete,
       'startTime': startTime.millisecondsSinceEpoch,
       'mistakes': mistakes,
+      'errorCount': errorCount,
+      'hasUsedNotes': hasUsedNotes,
+      'hasUsedHint': hasUsedHint,
+      'isValidRun': isValidRun,
     };
   }
 

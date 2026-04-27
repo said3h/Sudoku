@@ -56,6 +56,10 @@ void main() {
         isComplete: false,
         startTime: DateTime(2026, 4, 16, 10, 0),
         mistakes: 2,
+        errorCount: 2,
+        hasUsedNotes: true,
+        hasUsedHint: false,
+        isValidRun: true,
       ),
     );
 
@@ -67,6 +71,10 @@ void main() {
     expect(restored.isZenMode, isTrue);
     expect(restored.notes[(0, 1)], {2, 7});
     expect(restored.selectedCell, (0, 1));
+    expect(restored.errorCount, 2);
+    expect(restored.hasUsedNotes, isTrue);
+    expect(restored.hasUsedHint, isFalse);
+    expect(restored.isValidRun, isTrue);
   });
 
   test('daily completion increases streak and daily counters', () {

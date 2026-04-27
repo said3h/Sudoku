@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/providers/app_settings_provider.dart';
 import '../../data/models/saved_sudoku_game.dart';
 import '../../data/sudoku_game_storage.dart';
+import '../../domain/models/game_result.dart';
 import '../../domain/models/game_mode.dart';
 import '../../domain/models/sudoku_board.dart';
 import '../../domain/sudoku_generator.dart';
@@ -66,6 +67,11 @@ class SudokuGameState {
   final bool isComplete;
   final DateTime startTime;
   final int mistakes;
+  final int errorCount;
+  final bool hasUsedNotes;
+  final bool hasUsedHint;
+  final bool isValidRun;
+  final GameResult? gameResult;
 
   const SudokuGameState({
     required this.cluesCount,
@@ -82,6 +88,11 @@ class SudokuGameState {
     this.isComplete = false,
     required this.startTime,
     this.mistakes = 0,
+    this.errorCount = 0,
+    this.hasUsedNotes = false,
+    this.hasUsedHint = false,
+    this.isValidRun = true,
+    this.gameResult,
   });
 
   bool get isDailyChallenge => gameMode == GameMode.daily;
@@ -103,6 +114,11 @@ class SudokuGameState {
     bool? isComplete,
     DateTime? startTime,
     int? mistakes,
+    int? errorCount,
+    bool? hasUsedNotes,
+    bool? hasUsedHint,
+    bool? isValidRun,
+    Object? gameResult = _selectedCellUnset,
   }) {
     return SudokuGameState(
       cluesCount: cluesCount ?? this.cluesCount,
@@ -123,6 +139,13 @@ class SudokuGameState {
       isComplete: isComplete ?? this.isComplete,
       startTime: startTime ?? this.startTime,
       mistakes: mistakes ?? this.mistakes,
+      errorCount: errorCount ?? this.errorCount,
+      hasUsedNotes: hasUsedNotes ?? this.hasUsedNotes,
+      hasUsedHint: hasUsedHint ?? this.hasUsedHint,
+      isValidRun: isValidRun ?? this.isValidRun,
+      gameResult: identical(gameResult, _selectedCellUnset)
+          ? this.gameResult
+          : gameResult as GameResult?,
     );
   }
 }
@@ -212,6 +235,10 @@ class SudokuGameNotifier extends StateNotifier<SudokuGameState> {
       isComplete: savedGame.isComplete,
       startTime: savedGame.startTime,
       mistakes: savedGame.mistakes,
+      errorCount: savedGame.errorCount,
+      hasUsedNotes: savedGame.hasUsedNotes,
+      hasUsedHint: savedGame.hasUsedHint,
+      isValidRun: savedGame.isValidRun,
     );
   }
 
@@ -274,7 +301,11 @@ class SudokuGameNotifier extends StateNotifier<SudokuGameState> {
   }
 
   void toggleNoteMode() {
-    state = state.copyWith(isNoteMode: !state.isNoteMode);
+    final nextIsNoteMode = !state.isNoteMode;
+    state = state.copyWith(
+      isNoteMode: nextIsNoteMode,
+      hasUsedNotes: state.hasUsedNotes || nextIsNoteMode,
+    );
     _persistProgress();
   }
 
@@ -316,7 +347,12 @@ class SudokuGameNotifier extends StateNotifier<SudokuGameState> {
     final notes = _cloneNotes(state.notes);
     _clearRelatedNotes(notes, row, col, solutionValue);
 
-    _setBoardState(newBoard, notes: notes, mistakes: state.mistakes);
+    _setBoardState(
+      newBoard,
+      notes: notes,
+      mistakes: state.mistakes,
+      hasUsedHint: true,
+    );
   }
 
   void resetGame() {
@@ -353,7 +389,7 @@ class SudokuGameNotifier extends StateNotifier<SudokuGameState> {
       cellNotes.add(number);
     }
 
-    state = state.copyWith(notes: notes);
+    state = state.copyWith(notes: notes, hasUsedNotes: true);
     _persistProgress();
   }
 
@@ -373,8 +409,14 @@ class SudokuGameNotifier extends StateNotifier<SudokuGameState> {
     final mistakes = state.isZenMode || isCorrect
         ? state.mistakes
         : state.mistakes + 1;
+    final errorCount = isCorrect ? state.errorCount : state.errorCount + 1;
 
-    _setBoardState(newBoard, notes: notes, mistakes: mistakes);
+    _setBoardState(
+      newBoard,
+      notes: notes,
+      mistakes: mistakes,
+      errorCount: errorCount,
+    );
     return !isCorrect && !state.isZenMode;
   }
 
@@ -397,16 +439,33 @@ class SudokuGameNotifier extends StateNotifier<SudokuGameState> {
     SudokuBoard newBoard, {
     required Map<(int, int), Set<int>> notes,
     required int mistakes,
+    int? errorCount,
+    bool? hasUsedHint,
   }) {
     final wasComplete = state.isComplete;
+    final isComplete = SudokuValidator.isBoardSolved(newBoard);
     state = state.copyWith(
       currentBoard: newBoard,
       notes: notes,
       mistakes: mistakes,
-      isComplete: SudokuValidator.isBoardSolved(newBoard),
+      errorCount: errorCount,
+      hasUsedHint: hasUsedHint,
+      isComplete: isComplete,
+      gameResult: isComplete ? _buildGameResult() : null,
     );
 
     _syncPersistence(previouslyComplete: wasComplete);
+  }
+
+  GameResult _buildGameResult() {
+    return GameResult(
+      elapsedTime: state.elapsed,
+      errorCount: state.errorCount,
+      hasUsedNotes: state.hasUsedNotes,
+      gameMode: state.gameMode,
+      seed: config.seed,
+      isValidRun: state.isValidRun,
+    );
   }
 
   void _syncPersistence({required bool previouslyComplete}) {
@@ -444,6 +503,10 @@ class SudokuGameNotifier extends StateNotifier<SudokuGameState> {
         isComplete: state.isComplete,
         startTime: state.startTime,
         mistakes: state.mistakes,
+        errorCount: state.errorCount,
+        hasUsedNotes: state.hasUsedNotes,
+        hasUsedHint: state.hasUsedHint,
+        isValidRun: state.isValidRun,
       ),
     );
   }
