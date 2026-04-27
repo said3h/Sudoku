@@ -96,9 +96,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 children: [
                   const SizedBox(height: 18),
                   _AppHeader(
-                    streak: stats.currentStreak,
                     level: _calculateLevel(stats.gamesCompleted),
-                    isDailyCompleted: isDailyCompleted,
                   ),
                   const SizedBox(height: 24),
                   _DailyChallengeHero(
@@ -171,14 +169,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
 
 class _AppHeader extends StatelessWidget {
   const _AppHeader({
-    required this.streak,
     required this.level,
-    required this.isDailyCompleted,
   });
 
-  final int streak;
   final int level;
-  final bool isDailyCompleted;
 
   @override
   Widget build(BuildContext context) {
@@ -222,9 +216,16 @@ class _AppHeader extends StatelessWidget {
         ),
         _LevelBadge(level: level),
         const SizedBox(width: 8),
-        _PremiumStreakBadge(
-          streak: streak,
-          isDailyCompleted: isDailyCompleted,
+        _HeaderActionButton(
+          icon: Icons.insights_rounded,
+          label: 'Stats',
+          onTap: () => context.push(AppConstants.routeStats),
+        ),
+        const SizedBox(width: 8),
+        _HeaderActionButton(
+          icon: Icons.tune_rounded,
+          label: 'Ajustes',
+          onTap: () => context.push(AppConstants.routeSettings),
         ),
       ],
     );
@@ -268,114 +269,42 @@ class _LevelBadge extends StatelessWidget {
   }
 }
 
-class _PremiumStreakBadge extends StatelessWidget {
-  const _PremiumStreakBadge({
-    required this.streak,
-    required this.isDailyCompleted,
+class _HeaderActionButton extends StatelessWidget {
+  const _HeaderActionButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
   });
 
-  final int streak;
-  final bool isDailyCompleted;
-
-  @override
-  Widget build(BuildContext context) {
-    final c = context.appColors.colors;
-    final isAtRisk = streak > 0 && !isDailyCompleted;
-    final accent = isDailyCompleted
-        ? c.success
-        : isAtRisk
-            ? c.warning
-            : c.accent;
-    final label = isDailyCompleted
-        ? 'Mantenida'
-        : isAtRisk
-            ? 'En riesgo'
-            : 'Completa hoy';
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
-      decoration: BoxDecoration(
-        color: accent.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: accent.withOpacity(0.24)),
-        boxShadow: [
-          BoxShadow(
-            color: accent.withOpacity(0.08),
-            blurRadius: 18,
-            spreadRadius: -8,
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.local_fire_department_rounded,
-                color: accent,
-                size: 15,
-              ),
-              const SizedBox(width: 5),
-              Text(
-                '$streak',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: accent,
-                      fontWeight: FontWeight.w900,
-                      height: 1,
-                    ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: accent,
-                  fontSize: 9,
-                  fontWeight: FontWeight.w800,
-                  height: 1,
-                ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ignore: unused_element
-class _StreakBadge extends StatelessWidget {
-  const _StreakBadge({required this.streak});
-
-  final int streak;
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final c = context.appColors.colors;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      width: 42,
+      height: 42,
       decoration: BoxDecoration(
-        color: c.accent.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: c.accent.withOpacity(0.2),
-          width: 1,
+        color: c.surface,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: c.surfaceBorder),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(14),
+          child: Tooltip(
+            message: label,
+            child: Icon(
+              icon,
+              color: c.textSecondary,
+              size: 20,
+            ),
+          ),
         ),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text('🔥', style: TextStyle(fontSize: 14)),
-          const SizedBox(width: 6),
-          Text(
-            '$streak',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: c.accent,
-                  fontWeight: FontWeight.w900,
-                ),
-          ),
-        ],
       ),
     );
   }
