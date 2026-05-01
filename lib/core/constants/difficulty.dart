@@ -61,4 +61,11 @@ enum Difficulty {
         return Icons.emoji_events;
     }
   }
+
+  static String keyFromCluesCount(int cluesCount) {
+    if (cluesCount >= easy.cluesCount) return easy.name;
+    if (cluesCount >= medium.cluesCount) return medium.name;
+    if (cluesCount >= hard.cluesCount) return hard.name;
+    return expert.name;
+  }
 }

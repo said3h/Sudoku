@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/constants/difficulty.dart';
 import '../../../../core/services/feedback_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/models/sudoku_stats.dart';
@@ -273,17 +274,10 @@ class GameScreen extends ConsumerWidget {
 
   bool _checkNewRecord(SudokuGameState state, SudokuStats stats) {
     if (state.isZenMode) return false;
-    final key = _difficultyKey(state.cluesCount);
+    final key = Difficulty.keyFromCluesCount(state.cluesCount);
     final currentBest = stats.bestTimesMs[key];
     if (currentBest == null) return true;
     return state.elapsed.inMilliseconds < currentBest;
-  }
-
-  String _difficultyKey(int cluesCount) {
-    if (cluesCount >= 40) return 'easy';
-    if (cluesCount >= 32) return 'medium';
-    if (cluesCount >= 26) return 'hard';
-    return 'expert';
   }
 
   String _getVictoryTitle(SudokuGameState state) {

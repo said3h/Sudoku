@@ -71,7 +71,7 @@ class SudokuGameStorage {
     required String? completedDayKey,
   }) {
     final stats = loadStats();
-    final difficultyKey = _difficultyKey(cluesCount);
+    final difficultyKey = Difficulty.keyFromCluesCount(cluesCount);
     final bestTimes = Map<String, int>.from(stats.bestTimesMs);
     final elapsedMs = elapsed.inMilliseconds;
     final bestTime = bestTimes[difficultyKey];
@@ -141,12 +141,4 @@ class SudokuGameStorage {
     return 1;
   }
 
-  static String _difficultyKey(int cluesCount) {
-    return Difficulty.values
-        .firstWhere(
-          (difficulty) => difficulty.cluesCount == cluesCount,
-          orElse: () => Difficulty.medium,
-        )
-        .name;
-  }
 }
