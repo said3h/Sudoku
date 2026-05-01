@@ -1,9 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../domain/models/sudoku_board.dart';
 
-class SudokuBoardWidget extends StatelessWidget {
+class SudokuBoardWidget extends StatefulWidget {
   const SudokuBoardWidget({
     super.key,
     required this.currentBoard,
@@ -22,6 +24,79 @@ class SudokuBoardWidget extends StatelessWidget {
   final Map<(int, int), Set<int>> notes;
   final bool isZenMode;
   final void Function(int row, int col) onCellTap;
+
+  @override
+  State<SudokuBoardWidget> createState() => _SudokuBoardWidgetState();
+}
+
+class _SudokuBoardWidgetState extends State<SudokuBoardWidget> {
+  Set<(int, int)> _glowingCells = {};
+  Timer? _glowTimer;
+
+  @override
+  void didUpdateWidget(SudokuBoardWidget oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final newGlow = _detectNewlyCompleted(
+      oldWidget.currentBoard,
+      widget.currentBoard,
+    );
+    if (newGlow.isNotEmpty) {
+      _glowTimer?.cancel();
+      setState(() => _glowingCells = newGlow);
+      _glowTimer = Timer(const Duration(milliseconds: 500), () {
+        if (mounted) setState(() => _glowingCells = {});
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _glowTimer?.cancel();
+    super.dispose();
+  }
+
+  Set<(int, int)> _detectNewlyCompleted(SudokuBoard old, SudokuBoard next) {
+    final cells = <(int, int)>{};
+    for (int r = 0; r < 9; r++) {
+      if (!_isRowComplete(old, r) && _isRowComplete(next, r)) {
+        for (int c = 0; c < 9; c++) cells.add((r, c));
+      }
+    }
+    for (int c = 0; c < 9; c++) {
+      if (!_isColComplete(old, c) && _isColComplete(next, c)) {
+        for (int r = 0; r < 9; r++) cells.add((r, c));
+      }
+    }
+    for (int br = 0; br < 3; br++) {
+      for (int bc = 0; bc < 3; bc++) {
+        if (!_isBoxComplete(old, br, bc) && _isBoxComplete(next, br, bc)) {
+          for (int r = br * 3; r < br * 3 + 3; r++) {
+            for (int c = bc * 3; c < bc * 3 + 3; c++) {
+              cells.add((r, c));
+            }
+          }
+        }
+      }
+    }
+    return cells;
+  }
+
+  static bool _isRowComplete(SudokuBoard b, int row) =>
+      b[row].whereType<int>().toSet().length == 9;
+
+  static bool _isColComplete(SudokuBoard b, int col) =>
+      List.generate(9, (r) => b[r][col]).whereType<int>().toSet().length == 9;
+
+  static bool _isBoxComplete(SudokuBoard b, int br, int bc) {
+    final vals = <int>{};
+    for (int r = br * 3; r < br * 3 + 3; r++) {
+      for (int c = bc * 3; c < bc * 3 + 3; c++) {
+        final v = b[r][c];
+        if (v != null) vals.add(v);
+      }
+    }
+    return vals.length == 9;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -75,12 +150,13 @@ class SudokuBoardWidget extends StatelessWidget {
                                       palette: palette,
                                       blockRow: blockRow,
                                       blockCol: blockCol,
-                                      currentBoard: currentBoard,
-                                      givenCells: givenCells,
-                                      selectedCell: selectedCell,
-                                      notes: notes,
-                                      isZenMode: isZenMode,
-                                      onCellTap: onCellTap,
+                                      currentBoard: widget.currentBoard,
+                                      givenCells: widget.givenCells,
+                                      selectedCell: widget.selectedCell,
+                                      notes: widget.notes,
+                                      isZenMode: widget.isZenMode,
+                                      glowingCells: _glowingCells,
+                                      onCellTap: widget.onCellTap,
                                     ),
                                   ),
                                 );
@@ -111,6 +187,7 @@ class _Block extends StatelessWidget {
     required this.selectedCell,
     required this.notes,
     required this.isZenMode,
+    required this.glowingCells,
     required this.onCellTap,
   });
 
@@ -122,6 +199,7 @@ class _Block extends StatelessWidget {
   final (int, int)? selectedCell;
   final Map<(int, int), Set<int>> notes;
   final bool isZenMode;
+  final Set<(int, int)> glowingCells;
   final void Function(int row, int col) onCellTap;
 
   @override
@@ -157,6 +235,7 @@ class _Block extends StatelessWidget {
                         selectedCell: selectedCell,
                         notes: notes,
                         isZenMode: isZenMode,
+                        isGlowing: glowingCells.contains((row, col)),
                         onTap: () => onCellTap(row, col),
                       ),
                     ),
@@ -181,6 +260,7 @@ class _BoardCell extends StatelessWidget {
     required this.selectedCell,
     required this.notes,
     required this.isZenMode,
+    required this.isGlowing,
     required this.onTap,
   });
 
@@ -192,6 +272,7 @@ class _BoardCell extends StatelessWidget {
   final (int, int)? selectedCell;
   final Map<(int, int), Set<int>> notes;
   final bool isZenMode;
+  final bool isGlowing;
   final VoidCallback onTap;
 
   @override
@@ -217,6 +298,9 @@ class _BoardCell extends StatelessWidget {
     if (hasConflict) {
       background = palette.errorSoft;
       foreground = palette.error;
+    }
+    if (isGlowing && !hasConflict && !isSelected) {
+      background = palette.glowSuccess;
     }
     if (isSelected) {
       background = palette.blockBackground;
@@ -401,6 +485,7 @@ class _BoardPalette {
     required this.errorSoft,
     required this.error,
     required this.shadow,
+    required this.glowSuccess,
   });
 
   final Color boardBackground;
@@ -413,6 +498,7 @@ class _BoardPalette {
   final Color errorSoft;
   final Color error;
   final Color shadow;
+  final Color glowSuccess;
 
   factory _BoardPalette.fromScheme(AppColorScheme scheme) {
     return _BoardPalette(
@@ -426,6 +512,7 @@ class _BoardPalette {
       errorSoft: scheme.cellConflictSoft,
       error: scheme.cellConflict,
       shadow: scheme.accent.withOpacity(0.20),
+      glowSuccess: scheme.success.withOpacity(0.28),
     );
   }
 }
