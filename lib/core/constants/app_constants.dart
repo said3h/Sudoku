@@ -5,7 +5,6 @@ class AppConstants {
   static const String appVersion = '1.0.0';
 
   // Hive
-  static const String hiveBoxGame = 'sudoku_games';
   static const String hiveBoxSettings = 'settings';
   static const String hiveBoxStats = 'statistics';
   static const String hiveBoxCurrentGame = 'current_game';
