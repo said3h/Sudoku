@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
@@ -30,9 +28,7 @@ class SudokuBoardWidget extends StatefulWidget {
 }
 
 class _SudokuBoardWidgetState extends State<SudokuBoardWidget> {
-  Timer? _completionTimer;
   Set<(int, int)> _changedCells = {};
-  Set<_CompletedUnit> _completedUnits = {};
 
   @override
   void didUpdateWidget(covariant SudokuBoardWidget oldWidget) {
@@ -49,37 +45,18 @@ class _SudokuBoardWidgetState extends State<SudokuBoardWidget> {
 
     if (changedCells.isEmpty) return;
 
-    final completedUnits = _newlyCompletedUnits(
-      oldBoard: oldWidget.currentBoard,
-      currentBoard: widget.currentBoard,
-      solution: widget.solution,
-      changedCells: changedCells,
-    );
-
     setState(() {
       _changedCells = changedCells;
-      _completedUnits = completedUnits;
     });
-
-    _completionTimer?.cancel();
-    _completionTimer = Timer(const Duration(milliseconds: 720), () {
-      if (!mounted) return;
-      setState(() {
-        _changedCells = {};
-        _completedUnits = {};
-      });
-    });
-  }
-
-  @override
-  void dispose() {
-    _completionTimer?.cancel();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final palette = _BoardPalette.fromScheme(context.appColors.colors);
+    final completedUnits = _completedUnits(
+      board: widget.currentBoard,
+      solution: widget.solution,
+    );
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 18),
@@ -137,7 +114,7 @@ class _SudokuBoardWidgetState extends State<SudokuBoardWidget> {
                                       notes: widget.notes,
                                       isZenMode: widget.isZenMode,
                                       changedCells: _changedCells,
-                                      completedUnits: _completedUnits,
+                                      completedUnits: completedUnits,
                                       onCellTap: widget.onCellTap,
                                     ),
                                   ),
@@ -158,30 +135,21 @@ class _SudokuBoardWidgetState extends State<SudokuBoardWidget> {
     );
   }
 
-  Set<_CompletedUnit> _newlyCompletedUnits({
-    required SudokuBoard oldBoard,
-    required SudokuBoard currentBoard,
+  Set<_CompletedUnit> _completedUnits({
+    required SudokuBoard board,
     required SudokuBoard solution,
-    required Set<(int, int)> changedCells,
   }) {
     final units = <_CompletedUnit>{};
 
-    for (final cell in changedCells) {
-      final row = cell.$1;
-      final col = cell.$2;
-      final block = (row ~/ 3) * 3 + (col ~/ 3);
-
-      if (!_isRowComplete(oldBoard, solution, row) &&
-          _isRowComplete(currentBoard, solution, row)) {
-        units.add(_CompletedUnit.row(row));
+    for (var index = 0; index < 9; index++) {
+      if (_isRowComplete(board, solution, index)) {
+        units.add(_CompletedUnit.row(index));
       }
-      if (!_isColumnComplete(oldBoard, solution, col) &&
-          _isColumnComplete(currentBoard, solution, col)) {
-        units.add(_CompletedUnit.column(col));
+      if (_isColumnComplete(board, solution, index)) {
+        units.add(_CompletedUnit.column(index));
       }
-      if (!_isBlockComplete(oldBoard, solution, block) &&
-          _isBlockComplete(currentBoard, solution, block)) {
-        units.add(_CompletedUnit.block(block));
+      if (_isBlockComplete(board, solution, index)) {
+        units.add(_CompletedUnit.block(index));
       }
     }
 
