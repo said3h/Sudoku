@@ -59,12 +59,12 @@ class _SudokuBoardWidgetState extends State<SudokuBoardWidget> {
     final cells = <(int, int)>{};
     for (int r = 0; r < 9; r++) {
       if (!_isRowComplete(old, r) && _isRowComplete(next, r)) {
-        for (int c = 0; c < 9; c++) cells.add((r, c));
+        for (int c = 0; c < 9; c++) { cells.add((r, c)); }
       }
     }
     for (int c = 0; c < 9; c++) {
       if (!_isColComplete(old, c) && _isColComplete(next, c)) {
-        for (int r = 0; r < 9; r++) cells.add((r, c));
+        for (int r = 0; r < 9; r++) { cells.add((r, c)); }
       }
     }
     for (int br = 0; br < 3; br++) {
