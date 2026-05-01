@@ -356,7 +356,7 @@ class _BoardCell extends StatelessWidget {
       background = palette.cellPeer;
     }
     if (isMatched) {
-      background = palette.primary.withOpacity(0.14);
+      background = palette.primary.withOpacity(0.18);
       if (Theme.of(context).brightness == Brightness.dark) {
         foreground = palette.secondary;
       }
@@ -390,12 +390,17 @@ class _BoardCell extends StatelessWidget {
       background = palette.cellSelected;
       foreground = hasConflict ? palette.error : palette.primary;
       borderColor = palette.primary;
-      borderWidth = 2;
+      borderWidth = 2.25;
       boxShadow = [
         BoxShadow(
-          color: palette.primary.withOpacity(0.30),
-          blurRadius: 15,
-          spreadRadius: 0,
+          color: palette.primary.withOpacity(0.46),
+          blurRadius: 24,
+          spreadRadius: 1,
+        ),
+        BoxShadow(
+          color: palette.primary.withOpacity(0.18),
+          blurRadius: 8,
+          spreadRadius: -1,
         ),
       ];
     }

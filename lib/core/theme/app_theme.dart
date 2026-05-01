@@ -93,7 +93,7 @@ class AppTheme {
         centerTitle: false,
         titleTextStyle: baseTextTheme.titleLarge,
       ),
-      cardTheme: CardTheme(
+      cardTheme: CardThemeData(
         color: colors.surface,
         elevation: 0,
         shape: RoundedRectangleBorder(
@@ -168,7 +168,7 @@ class AppTheme {
           borderSide: BorderSide(color: colors.accentBlue, width: 1.2),
         ),
       ),
-      dialogTheme: DialogTheme(
+      dialogTheme: DialogThemeData(
         backgroundColor: colors.surface,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(28),

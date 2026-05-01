@@ -95,7 +95,7 @@ class NumberPad extends StatelessWidget {
   }
 }
 
-class _NumberButton extends StatelessWidget {
+class _NumberButton extends StatefulWidget {
   const _NumberButton({
     required this.number,
     required this.onTap,
@@ -105,36 +105,67 @@ class _NumberButton extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
+  State<_NumberButton> createState() => _NumberButtonState();
+}
+
+class _NumberButtonState extends State<_NumberButton> {
+  bool _isPressed = false;
+
+  @override
   Widget build(BuildContext context) {
     final c = context.appColors.colors;
     final brightness = Theme.of(context).brightness;
-    final numberColor = brightness == Brightness.dark
-        ? c.primaryLight
-        : c.textPrimary;
+    final numberColor =
+        brightness == Brightness.dark ? c.primaryLight : c.textPrimary;
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(16),
-        child: Ink(
-          height: 56,
-          decoration: BoxDecoration(
-            color: c.surfaceLight,
+    return Listener(
+      onPointerDown: (_) => setState(() => _isPressed = true),
+      onPointerCancel: (_) => setState(() => _isPressed = false),
+      onPointerUp: (_) => setState(() => _isPressed = false),
+      child: AnimatedScale(
+        scale: _isPressed ? 0.94 : 1,
+        duration: const Duration(milliseconds: 90),
+        curve: Curves.easeOutCubic,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: widget.onTap,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: c.surfaceBorder.withOpacity(0.8),
-              width: 1.2,
-            ),
-          ),
-          child: Center(
-            child: Text(
-              '$number',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: numberColor,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 26,
-                  ),
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 140),
+              curve: Curves.easeOutCubic,
+              height: 56,
+              decoration: BoxDecoration(
+                color: _isPressed ? c.accentSoft : c.surfaceLight,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(
+                  color: _isPressed
+                      ? c.accent.withOpacity(0.72)
+                      : c.surfaceBorder.withOpacity(0.8),
+                  width: _isPressed ? 1.6 : 1.2,
+                ),
+                boxShadow: _isPressed
+                    ? [
+                        BoxShadow(
+                          color: c.accent.withOpacity(0.24),
+                          blurRadius: 16,
+                          spreadRadius: -2,
+                        ),
+                      ]
+                    : null,
+              ),
+              child: Center(
+                child: AnimatedDefaultTextStyle(
+                  duration: const Duration(milliseconds: 120),
+                  curve: Curves.easeOutCubic,
+                  style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                        color: _isPressed ? c.accent : numberColor,
+                        fontWeight: FontWeight.w900,
+                        fontSize: _isPressed ? 28 : 26,
+                      ),
+                  child: Text('${widget.number}'),
+                ),
+              ),
             ),
           ),
         ),

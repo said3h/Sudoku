@@ -80,7 +80,10 @@ class AppRouter {
     if (isIos) {
       return CupertinoPage<void>(
         key: state.pageKey,
-        child: child,
+        fullscreenDialog: false,
+        child: state.uri.path == AppConstants.routeHome
+            ? child
+            : _IosBackSwipeWrapper(child: child),
       );
     }
 
@@ -107,6 +110,49 @@ class AppRouter {
           ),
         );
       },
+    );
+  }
+}
+
+class _IosBackSwipeWrapper extends StatefulWidget {
+  const _IosBackSwipeWrapper({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_IosBackSwipeWrapper> createState() => _IosBackSwipeWrapperState();
+}
+
+class _IosBackSwipeWrapperState extends State<_IosBackSwipeWrapper> {
+  static const double _edgeWidth = 28;
+  static const double _popDistance = 72;
+
+  bool _isTrackingBackSwipe = false;
+  double _dragDistance = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onHorizontalDragStart: (details) {
+        _dragDistance = 0;
+        _isTrackingBackSwipe = details.localPosition.dx <= _edgeWidth;
+      },
+      onHorizontalDragUpdate: (details) {
+        if (!_isTrackingBackSwipe) return;
+        _dragDistance += details.primaryDelta ?? 0;
+      },
+      onHorizontalDragEnd: (details) {
+        if (!_isTrackingBackSwipe) return;
+        _isTrackingBackSwipe = false;
+
+        final velocity = details.primaryVelocity ?? 0;
+        final shouldPop = _dragDistance > _popDistance || velocity > 450;
+        if (shouldPop && context.canPop()) {
+          context.pop();
+        }
+      },
+      child: widget.child,
     );
   }
 }
