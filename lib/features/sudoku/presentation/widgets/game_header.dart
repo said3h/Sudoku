@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
@@ -160,7 +162,7 @@ class _MiniBadge extends StatelessWidget {
   }
 }
 
-class _InfoCard extends StatelessWidget {
+class _InfoCard extends StatefulWidget {
   const _InfoCard({
     required this.icon,
     required this.accent,
@@ -176,10 +178,34 @@ class _InfoCard extends StatelessWidget {
   final bool live;
 
   @override
+  State<_InfoCard> createState() => _InfoCardState();
+}
+
+class _InfoCardState extends State<_InfoCard> {
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.live) {
+      _timer = Timer.periodic(
+        const Duration(seconds: 1),
+        (_) => setState(() {}),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final c = context.appColors.colors;
 
-    final content = Container(
+    return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: c.surfaceLight,
@@ -192,10 +218,10 @@ class _InfoCard extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: accent.withOpacity(0.14),
+              color: widget.accent.withOpacity(0.14),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, size: 18, color: accent),
+            child: Icon(widget.icon, size: 18, color: widget.accent),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -203,14 +229,14 @@ class _InfoCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  label,
+                  widget.label,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: c.textSecondary,
                       ),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  valueBuilder(),
+                  widget.valueBuilder(),
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
@@ -220,14 +246,6 @@ class _InfoCard extends StatelessWidget {
           ),
         ],
       ),
-    );
-
-    if (!live) return content;
-
-    return StreamBuilder<int>(
-      stream: Stream.periodic(const Duration(seconds: 1), (tick) => tick),
-      initialData: 0,
-      builder: (context, snapshot) => content,
     );
   }
 }

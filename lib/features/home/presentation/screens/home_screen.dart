@@ -23,32 +23,6 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  Timer? _midnightTimer;
-  Duration _timeUntilMidnight = Duration.zero;
-
-  @override
-  void initState() {
-    super.initState();
-    _calculateTimeUntilMidnight();
-    _midnightTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      _calculateTimeUntilMidnight();
-    });
-  }
-
-  void _calculateTimeUntilMidnight() {
-    final now = DateTime.now();
-    final tomorrow = DateTime(now.year, now.month, now.day + 1);
-    setState(() {
-      _timeUntilMidnight = tomorrow.difference(now);
-    });
-  }
-
-  @override
-  void dispose() {
-    _midnightTimer?.cancel();
-    super.dispose();
-  }
-
   @override
   Widget build(BuildContext context) {
     final settings = ref.watch(appSettingsProvider);
@@ -102,7 +76,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                   const SizedBox(height: 24),
                   _DailyChallengeHero(
                     isCompleted: isDailyCompleted,
-                    timeUntilMidnight: _timeUntilMidnight,
                     onTap: () {
                       context.push(
                         '${AppConstants.routeGame}?clues=${Difficulty.hard.cluesCount}'
@@ -309,12 +282,10 @@ class _StreakBadge extends StatelessWidget {
 class _DailyChallengeHero extends StatelessWidget {
   const _DailyChallengeHero({
     required this.isCompleted,
-    required this.timeUntilMidnight,
     required this.onTap,
   });
 
   final bool isCompleted;
-  final Duration timeUntilMidnight;
   final VoidCallback onTap;
 
   @override
@@ -407,7 +378,7 @@ class _DailyChallengeHero extends StatelessWidget {
             ),
             if (!isCompleted) ...[
               const SizedBox(height: 16),
-              _CountdownTimer(timeUntilMidnight: timeUntilMidnight),
+              const _CountdownTimer(),
             ],
           ],
         ),
@@ -416,17 +387,44 @@ class _DailyChallengeHero extends StatelessWidget {
   }
 }
 
-class _CountdownTimer extends StatelessWidget {
-  const _CountdownTimer({required this.timeUntilMidnight});
+class _CountdownTimer extends StatefulWidget {
+  const _CountdownTimer();
 
-  final Duration timeUntilMidnight;
+  @override
+  State<_CountdownTimer> createState() => _CountdownTimerState();
+}
+
+class _CountdownTimerState extends State<_CountdownTimer> {
+  late Duration _timeUntilMidnight;
+  Timer? _timer;
+
+  static Duration _untilMidnight() {
+    final now = DateTime.now();
+    return DateTime(now.year, now.month, now.day + 1).difference(now);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _timeUntilMidnight = _untilMidnight();
+    _timer = Timer.periodic(
+      const Duration(seconds: 1),
+      (_) => setState(() { _timeUntilMidnight = _untilMidnight(); }),
+    );
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final c = context.appColors.colors;
-    final hours = timeUntilMidnight.inHours;
-    final minutes = timeUntilMidnight.inMinutes.remainder(60);
-    final seconds = timeUntilMidnight.inSeconds.remainder(60);
+    final hours = _timeUntilMidnight.inHours;
+    final minutes = _timeUntilMidnight.inMinutes.remainder(60);
+    final seconds = _timeUntilMidnight.inSeconds.remainder(60);
 
     return Row(
       children: [
