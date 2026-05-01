@@ -325,9 +325,6 @@ class _BoardCell extends StatelessWidget {
     }
     if (isMatched) {
       background = palette.primary.withOpacity(0.18);
-      if (Theme.of(context).brightness == Brightness.dark) {
-        foreground = palette.secondary;
-      }
     }
     if (hasConflict) {
       background = palette.errorSoft;
@@ -344,7 +341,6 @@ class _BoardCell extends StatelessWidget {
     }
     if (hasCompletionGlow && !hasConflict) {
       background = palette.successSoft;
-      foreground = isGiven ? palette.onSurface : palette.success;
       borderColor = palette.success.withOpacity(0.42);
       boxShadow = [
         BoxShadow(
