@@ -83,6 +83,16 @@ void main() {
       board[1][0] = 9; // top-left box, same col as (0,0)
       expect(board.isValidMove(0, 0, 9), isFalse);
     });
+
+    // Regression for the && vs || bug in the 3x3 box loop.
+    // The conflicting cell shares ONLY the box with the target (different row
+    // AND different column), so neither the row-check nor the column-check can
+    // compensate — the box-check must catch it on its own.
+    test('regression: box-only conflict (different row AND col) is detected', () {
+      final board = _empty();
+      board[2][2] = 5; // top-left box, row 2 col 2 — differs from (0,0) in both
+      expect(board.isValidMove(0, 0, 5), isFalse);
+    });
   });
 
   group('BoardExtension.isComplete', () {
