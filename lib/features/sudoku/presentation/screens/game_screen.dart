@@ -3,6 +3,7 @@ import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/constants/app_constants.dart';
 import '../../../../core/services/feedback_service.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/models/sudoku_stats.dart';
@@ -162,7 +163,7 @@ class GameScreen extends ConsumerWidget {
       barrierLabel: 'victory',
       barrierColor: Colors.black.withOpacity(0.64),
       transitionDuration: const Duration(milliseconds: 420),
-      pageBuilder: (context, animation, secondaryAnimation) {
+      pageBuilder: (dialogContext, animation, secondaryAnimation) {
         return Center(
           child: Container(
             margin: const EdgeInsets.symmetric(horizontal: 28),
@@ -237,8 +238,10 @@ class GameScreen extends ConsumerWidget {
                       Expanded(
                         child: OutlinedButton(
                           onPressed: () {
-                            Navigator.of(context).pop();
-                            context.go('/stats');
+                            Navigator.of(dialogContext).pop();
+                            if (context.mounted) {
+                              context.push(AppConstants.routeStats);
+                            }
                           },
                           child: const Text('Stats'),
                         ),
